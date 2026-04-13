@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <title>خريطة التطعيمات - غزة</title>
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/L.Control.Locate.min.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet-search.css">
+        <link rel="stylesheet" href="css/nouislider.min.css">
+        <link rel="stylesheet" href="css/leaflet.photon.css">
+        <link rel="stylesheet" href="css/leaflet-measure.css">
+        <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+        <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary-color: #10b981;
+            --background-light: #f8fafc;
+            --background-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+            font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+        }
+
+        #all {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: row-reverse;
+        }
+
+        #menu {
+            width: 320px;
+            min-width: 320px;
+            height: 100%;
+            overflow-y: auto;
+            background: linear-gradient(180deg, var(--background-light) 0%, #fff 100%);
+            padding: 0;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+        }
+
+        .menu-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .menu-header h1 {
+            margin: 0;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .menu-header p {
+            margin: 5px 0 0 0;
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .filters-container {
+            padding: 15px;
+        }
+
+        .filter-section {
+            background: var(--background-card);
+            border-radius: var(--radius-md);
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        .filter-section:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-color);
+        }
+
+        .filter-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-label i {
+            color: var(--primary-color);
+            font-size: 0.9rem;
+        }
+
+        .filter-value {
+            font-size: 0.8rem;
+            color: var(--primary-color);
+            font-weight: 600;
+            background: rgba(37, 99, 235, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-right: auto;
+        }
+
+        .clear-filter {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            background: transparent;
+            border: none;
+        }
+
+        .clear-filter:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .slider {
+            margin: 10px 5px 5px 5px;
+        }
+
+        .noUi-target {
+            background: var(--border-color);
+            border: none;
+            box-shadow: none;
+            height: 6px;
+            border-radius: 3px;
+        }
+
+        .noUi-connect {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 3px;
+        }
+
+        .noUi-handle {
+            width: 18px !important;
+            height: 18px !important;
+            border-radius: 50% !important;
+            background: white !important;
+            border: 3px solid var(--primary-color) !important;
+            box-shadow: var(--shadow-md) !important;
+            top: -7px !important;
+            cursor: pointer;
+        }
+
+        .noUi-handle:before, .noUi-handle:after {
+            display: none !important;
+        }
+
+        .filter-select {
+            width: 100%;
+            min-height: 100px;
+            max-height: 150px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            padding: 5px;
+            background: white;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .filter-select option {
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        .filter-select option:checked {
+            background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+            color: white;
+        }
+
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+
+        /* Scrollbar styling */
+        #menu::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #menu::-webkit-scrollbar-track {
+            background: var(--background-light);
+        }
+
+        #menu::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        #menu::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* Leaflet customizations */
+        .leaflet-control-search {
+            box-shadow: var(--shadow-md) !important;
+            border-radius: var(--radius-md) !important;
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: var(--radius-md) !important;
+            box-shadow: var(--shadow-lg) !important;
+        }
+
+        .leaflet-popup-content table {
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .leaflet-popup-content table tr td {
+            padding: 6px 10px;
+            font-size: 0.85rem;
+        }
+
+        .leaflet-popup-content table tr td strong {
+            color: var(--primary-color);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            #menu {
+                width: 280px;
+                min-width: 280px;
+            }
+
+            .menu-header h1 {
+                font-size: 1.1rem;
+            }
+        }
+        </style>
+    </head>
+    <body>
+        <div id="all">
+            <div id="menu">
+                <div class="menu-header">
+                    <h1><i class="fas fa-map-marked-alt"></i> خريطة التطعيمات</h1>
+                    <p>قطاع غزة - نظام تتبع التطعيمات</p>
+                </div>
+                <div class="filters-container" id="filters-container">
+                    <!-- Filters will be added here dynamically -->
+                </div>
+            </div>
+            <div id="map"></div>
+        </div>
+
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/L.Control.Locate.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet.photon.js"></script>
+        <script src="js/leaflet-measure.js"></script>
+        <script src="js/leaflet-search.js"></script>
+        <script src="js/nouislider.min.js"></script>
+        <script src="js/wNumb.js"></script>
+        <script src="data/vaccination_data.js"></script>
+        <script>
+        var highlightLayer;
+        function highlightFeature(e) {
+            highlightLayer = e.target;
+            if (e.target.feature.geometry.type === 'LineString' || e.target.feature.geometry.type === 'MultiLineString') {
+              highlightLayer.setStyle({
+                color: 'rgba(255, 255, 0, 1.00)',
+              });
+            } else {
+              highlightLayer.setStyle({
+                fillColor: 'rgba(255, 255, 0, 1.00)',
+                fillOpacity: 1
+              });
+            }
+            highlightLayer.openPopup();
+        }
+
+        var map = L.map('map', {
+            zoomControl: false,
+            maxZoom: 28,
+            minZoom: 1
+        }).fitBounds([[31.20507802512429,34.119629865067616],[31.541582704655145,34.51231792690869]]);
+
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+
+        function removeEmptyRowsFromPopupContent(content, feature) {
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            var rows = tempDiv.querySelectorAll('tr');
+            for (var i = 0; i < rows.length; i++) {
+                var td = rows[i].querySelector('td.visible-with-data');
+                var key = td ? td.id : '';
+                if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                    rows[i].parentNode.removeChild(rows[i]);
+                }
+            }
+            return tempDiv.innerHTML;
+        }
+
+        function addClassToPopupIfMedia(content, popup) {
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            var imgTd = tempDiv.querySelector('td img');
+            if (imgTd) {
+                var src = imgTd.getAttribute('src');
+                if (/\.(jpg|jpeg|png|gif|bmp|webp|avif)$/i.test(src)) {
+                    popup._contentNode.classList.add('media');
+                    setTimeout(function() { popup.update(); }, 10);
+                } else if (/\.(mp3|wav|ogg|aac)$/i.test(src)) {
+                    var audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.src = src;
+                    imgTd.parentNode.replaceChild(audio, imgTd);
+                    popup._contentNode.classList.add('media');
+                    setTimeout(function() { popup.setContent(tempDiv.innerHTML); popup.update(); }, 10);
+                } else if (/\.(mp4|webm|ogg|mov)$/i.test(src)) {
+                    var video = document.createElement('video');
+                    video.controls = true;
+                    video.src = src;
+                    video.style.width = "400px";
+                    video.style.height = "300px";
+                    video.style.maxHeight = "60vh";
+                    video.style.maxWidth = "60vw";
+                    imgTd.parentNode.replaceChild(video, imgTd);
+                    popup._contentNode.classList.add('media');
+                    video.addEventListener('loadedmetadata', function() { popup.update(); });
+                    setTimeout(function() { popup.setContent(tempDiv.innerHTML); popup.update(); }, 10);
+                } else {
+                    popup._contentNode.classList.remove('media');
+                }
+            } else {
+                popup._contentNode.classList.remove('media');
+            }
+        }
+
+        var zoomControl = L.control.zoom({ position: 'topleft' }).addTo(map);
+        L.control.locate({locateOptions: {maxZoom: 19}}).addTo(map);
+
+        var measureControl = new L.Control.Measure({
+            position: 'topleft',
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares'
+        });
+        measureControl.addTo(map);
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].innerHTML = '';
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].className += ' fas fa-ruler';
+
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {}
+
+        map.createPane('pane_OpenStreetMap_0');
+        map.getPane('pane_OpenStreetMap_0').style.zIndex = 400;
+        var layer_OpenStreetMap_0 = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            pane: 'pane_OpenStreetMap_0',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 19
+        });
+        map.addLayer(layer_OpenStreetMap_0);
+
+        function pop_vaccination_data(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){ feature.closePopup() });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var p = feature.properties;
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>اسم المنشأة / Facility Name</strong><br />' + (p['Health Facility'] || '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2"><strong>المحافظة / Governorate</strong><br />' + (p['Governorate'] || '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2"><strong>إجمالي الأطفال / Total Children</strong>[' + (p['Total Children'] || 0) + ']</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2"><strong>التطعيم بالموعد / On Schedule</strong>[' + (p['On Schedule'] || 0) + ']</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2"><strong>متأخرين / Defaulter</strong>[' + (p['Defaulter'] || 0) + ']</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2"><strong>جرعة صفرية / Zero Dose</strong>[' + (p['Zero Dose'] || 0) + ']</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2"><strong>أطفال 0-12 شهر / Age 0-12</strong>[' + (p['Age 0-12 Months'] || 0) + ']</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2"><strong>أطفال 12-24 شهر / Age 12-24</strong>[' + (p['Age 12-24 Months'] || 0) + ']</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2"><strong>أطفال فوق 24 شهر / Age 24+</strong>' + (p['Age Above 24 Months'] || 0) + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+            layer.on('popupopen', function(e) {
+                addClassToPopupIfMedia(content, e.popup);
+            });
+            layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_vaccination_data_0(feature) {
+            var totalChildren = feature.properties['Total Children'] || 0;
+            var radius = Math.max(6, Math.min(15, 6 + Math.sqrt(totalChildren) * 0.5));
+
+            // Color based on governorate
+            var colors = {
+                'Gaza': '#e74c3c',
+                'North Gaza': '#9b59b6',
+                'Middle zone': '#3498db',
+                'Khan Younis': '#2ecc71',
+                'Rafah': '#f39c12'
+            };
+            var fillColor = colors[feature.properties['Governorate']] || '#95a5a6';
+
+            return {
+                pane: 'pane_vaccination_data',
+                radius: radius,
+                opacity: 1,
+                color: '#2c3e50',
+                dashArray: '',
+                lineCap: 'round',
+                lineJoin: 'round',
+                weight: 2,
+                fill: true,
+                fillOpacity: 0.8,
+                fillColor: fillColor,
+                interactive: true,
+            };
+        }
+
+        map.createPane('pane_vaccination_data');
+        map.getPane('pane_vaccination_data').style.zIndex = 401;
+        map.getPane('pane_vaccination_data').style['mix-blend-mode'] = 'normal';
+
+        var layer_vaccination_data = new L.geoJson(json_vaccination_data, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_vaccination_data',
+            layerName: 'layer_vaccination_data',
+            pane: 'pane_vaccination_data',
+            onEachFeature: pop_vaccination_data,
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, style_vaccination_data_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_vaccination_data);
+        map.addLayer(layer_vaccination_data);
+
+        // Search control
+        const url = {"Nominatim OSM": "https://nominatim.openstreetmap.org/search?format=geojson&addressdetails=1&"};
+        var photonControl = L.control.photon({
+            url: url["Nominatim OSM"],
+            feedbackLabel: '',
+            position: 'topleft',
+            includePosition: true,
+            initial: true,
+        }).addTo(map);
+        photonControl._container.childNodes[0].style.borderRadius = "10px";
+
+        var x = null;
+        var marker = null;
+        var z = null;
+        var obj2 = {};
+        var obj3 = {};
+
+        photonControl.on('selected', function(e) {
+            if (x != null) {
+                map.removeLayer(obj3.marker);
+                map.removeLayer(x);
+            }
+            obj2.gcd = e.choice;
+            x = L.geoJSON(obj2.gcd).addTo(map);
+            var label = typeof obj2.gcd.properties.label === 'undefined' ? obj2.gcd.properties.display_name : obj2.gcd.properties.label;
+            obj3.marker = L.marker(x.getLayers()[0].getLatLng()).bindPopup(label).addTo(map);
+            map.setView(x.getLayers()[0].getLatLng(), 17);
+            z = typeof e.choice.properties.label === 'undefined' ? e.choice.properties.display_name : e.choice.properties.label;
+            e.target.input.value = z;
+        });
+
+        var search = document.getElementsByClassName("leaflet-photon leaflet-control")[0];
+        search.classList.add("leaflet-control-search");
+        search.style.display = "flex";
+        search.style.backgroundColor = "rgba(255,255,255,0.9)";
+
+        var button = document.createElement("div");
+        button.id = "gcd-button-control";
+        button.className = "gcd-gl-btn fa fa-search search-button";
+        search.insertBefore(button, search.firstChild);
+        var last = search.lastChild;
+        last.style.display = "none";
+        button.addEventListener("click", function (e) {
+            last.style.display = last.style.display === "none" ? "block" : "none";
+        });
+
+        setBounds();
+
+        map.addControl(new L.Control.Search({
+            layer: layer_vaccination_data,
+            initial: false,
+            hideMarkerOnCollapse: true,
+            propertyName: 'Health Facility'
+        }));
+
+        if (typeof url === 'undefined') {
+            document.getElementsByClassName('search-button')[0].className += ' fa fa-binoculars';
+        } else {
+            document.getElementsByClassName('search-button')[1].className += ' fa fa-binoculars';
+        }
+
+        // Filter functionality
+        var Filters = {
+            "Governorate": "str",
+            "Total Children": "int",
+            "On Schedule": "int",
+            "Age 0-12 Months": "int",
+            "Age Above 24 Months": "int"
+        };
+
+        function filterFunc() {
+            map.eachLayer(function(lyr) {
+                if ("options" in lyr && "dataVar" in lyr["options"]) {
+                    var features = window[lyr["options"]["dataVar"]].features.slice(0);
+                    try {
+                        for (var key in Filters) {
+                            var keyS = key.replace(/[^a-zA-Z0-9_]/g, "");
+                            if (Filters[key] == "str") {
+                                var selection = [];
+                                var options = document.getElementById("sel_" + keyS).options;
+                                for (var i = 0; i < options.length; i++) {
+                                    if (options[i].selected) selection.push(options[i].value);
+                                }
+                                try {
+                                    if (key in features[0].properties) {
+                                        for (var i = features.length - 1; i >= 0; --i) {
+                                            if (selection.indexOf(features[i].properties[key]) < 0 && selection.length > 0) {
+                                                features.splice(i, 1);
+                                            }
+                                        }
+                                    }
+                                } catch(err) {}
+                            }
+                            if (Filters[key] == "int") {
+                                var sliderVals = document.getElementById("div_" + keyS).noUiSlider.get();
+                                try {
+                                    if (key in features[0].properties) {
+                                        for (var i = features.length - 1; i >= 0; --i) {
+                                            var val = parseInt(features[i].properties[key]) || 0;
+                                            if (val < parseInt(sliderVals[0]) || val > parseInt(sliderVals[1])) {
+                                                features.splice(i, 1);
+                                            }
+                                        }
+                                    }
+                                } catch(err) {}
+                            }
+                        }
+                    } catch(err) {}
+                    window[lyr["options"]["layerName"]].clearLayers();
+                    window[lyr["options"]["layerName"]].addData(features);
+                }
+            });
+        }
+
+        // Create filter UI
+        var filtersContainer = document.getElementById("filters-container");
+
+        // Governorate filter
+        var govSection = document.createElement('div');
+        govSection.className = 'filter-section';
+        govSection.innerHTML = '<div class="filter-label"><i class="fas fa-map-marker-alt"></i> المحافظة / Governorate <button class="clear-filter" onclick="clearSelect(\'sel_Governorate\')">مسح</button></div>';
+        var govSelect = document.createElement('select');
+        govSelect.multiple = true;
+        govSelect.size = 5;
+        govSelect.id = "sel_Governorate";
+        govSelect.className = "filter-select";
+        govSelect.onchange = filterFunc;
+        govSelect.innerHTML = '<option value="Gaza">Gaza - غزة</option><option value="Khan Younis">Khan Younis - خان يونس</option><option value="Middle zone">Middle zone - الوسطى</option><option value="North Gaza">North Gaza - شمال غزة</option><option value="Rafah">Rafah - رفح</option>';
+        govSection.appendChild(govSelect);
+        filtersContainer.appendChild(govSection);
+
+        // Total Children slider
+        var childSection = document.createElement('div');
+        childSection.className = 'filter-section';
+        childSection.innerHTML = '<div class="filter-label"><i class="fas fa-child"></i> إجمالي الأطفال <span class="filter-value" id="val_TotalChildren">0 - 1000</span> <button class="clear-filter" onclick="resetSlider(\'div_TotalChildren\')">مسح</button></div>';
+        var childSlider = document.createElement('div');
+        childSlider.id = 'div_TotalChildren';
+        childSlider.className = 'slider';
+        childSection.appendChild(childSlider);
+        filtersContainer.appendChild(childSection);
+
+        noUiSlider.create(childSlider, {
+            connect: true,
+            start: [0, 1000],
+            step: 1,
+            format: wNumb({ decimals: 0 }),
+            range: { min: 0, max: 1000 }
+        });
+        childSlider.noUiSlider.on('update', function(values) {
+            document.getElementById('val_TotalChildren').innerHTML = values.join(' - ');
+            filterFunc();
+        });
+
+        // On Schedule slider
+        var scheduleSection = document.createElement('div');
+        scheduleSection.className = 'filter-section';
+        scheduleSection.innerHTML = '<div class="filter-label"><i class="fas fa-calendar-check"></i> التطعيم بالموعد <span class="filter-value" id="val_OnSchedule">0 - 500</span> <button class="clear-filter" onclick="resetSlider(\'div_OnSchedule\')">مسح</button></div>';
+        var scheduleSlider = document.createElement('div');
+        scheduleSlider.id = 'div_OnSchedule';
+        scheduleSlider.className = 'slider';
+        scheduleSection.appendChild(scheduleSlider);
+        filtersContainer.appendChild(scheduleSection);
+
+        noUiSlider.create(scheduleSlider, {
+            connect: true,
+            start: [0, 500],
+            step: 1,
+            format: wNumb({ decimals: 0 }),
+            range: { min: 0, max: 500 }
+        });
+        scheduleSlider.noUiSlider.on('update', function(values) {
+            document.getElementById('val_OnSchedule').innerHTML = values.join(' - ');
+            filterFunc();
+        });
+
+        // Age 0-12 slider
+        var age012Section = document.createElement('div');
+        age012Section.className = 'filter-section';
+        age012Section.innerHTML = '<div class="filter-label"><i class="fas fa-baby"></i> أطفال 0-12 شهر <span class="filter-value" id="val_Age012Months">0 - 600</span> <button class="clear-filter" onclick="resetSlider(\'div_Age012Months\')">مسح</button></div>';
+        var age012Slider = document.createElement('div');
+        age012Slider.id = 'div_Age012Months';
+        age012Slider.className = 'slider';
+        age012Section.appendChild(age012Slider);
+        filtersContainer.appendChild(age012Section);
+
+        noUiSlider.create(age012Slider, {
+            connect: true,
+            start: [0, 600],
+            step: 1,
+            format: wNumb({ decimals: 0 }),
+            range: { min: 0, max: 600 }
+        });
+        age012Slider.noUiSlider.on('update', function(values) {
+            document.getElementById('val_Age012Months').innerHTML = values.join(' - ');
+            filterFunc();
+        });
+
+        // Age above 24 slider
+        var age24Section = document.createElement('div');
+        age24Section.className = 'filter-section';
+        age24Section.innerHTML = '<div class="filter-label"><i class="fas fa-user-friends"></i> أطفال فوق 24 شهر <span class="filter-value" id="val_AgeAbove24Months">0 - 100</span> <button class="clear-filter" onclick="resetSlider(\'div_AgeAbove24Months\')">مسح</button></div>';
+        var age24Slider = document.createElement('div');
+        age24Slider.id = 'div_AgeAbove24Months';
+        age24Slider.className = 'slider';
+        age24Section.appendChild(age24Slider);
+        filtersContainer.appendChild(age24Section);
+
+        noUiSlider.create(age24Slider, {
+            connect: true,
+            start: [0, 100],
+            step: 1,
+            format: wNumb({ decimals: 0 }),
+            range: { min: 0, max: 100 }
+        });
+        age24Slider.noUiSlider.on('update', function(values) {
+            document.getElementById('val_AgeAbove24Months').innerHTML = values.join(' - ');
+            filterFunc();
+        });
+
+        // Helper functions
+        function clearSelect(selectId) {
+            var options = document.getElementById(selectId).options;
+            for (var i = 0; i < options.length; i++) {
+                options[i].selected = false;
+            }
+            filterFunc();
+        }
+
+        function resetSlider(sliderId) {
+            document.getElementById(sliderId).noUiSlider.reset();
+        }
+        </script>
+    </body>
+</html>

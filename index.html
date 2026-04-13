@@ -1,0 +1,1324 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <title>Catch-Up Vaccination Tally Sheet - Round 2</title>
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/L.Control.Locate.min.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet-search.css">
+        <link rel="stylesheet" href="css/nouislider.min.css">
+        <link rel="stylesheet" href="css/leaflet.photon.css">
+        <link rel="stylesheet" href="css/leaflet-measure.css">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary-color: #10b981;
+            --background-light: #f8fafc;
+            --background-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+            font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
+        }
+
+        #all {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: row;
+        }
+
+        #menu {
+            width: 340px;
+            min-width: 340px;
+            height: 100%;
+            overflow-y: auto;
+            background: linear-gradient(180deg, var(--background-light) 0%, #fff 100%);
+            padding: 0;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+        }
+
+        .menu-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .menu-header h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .menu-header p {
+            margin: 5px 0 0 0;
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        .filters-container {
+            padding: 15px;
+        }
+
+        .section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 15px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .filter-section {
+            background: var(--background-card);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            margin-bottom: 10px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        .filter-section:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-color);
+        }
+
+        .filter-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .filter-label i {
+            color: var(--primary-color);
+            font-size: 0.85rem;
+        }
+
+        .filter-value {
+            font-size: 0.7rem;
+            color: var(--primary-color);
+            font-weight: 600;
+            background: rgba(37, 99, 235, 0.1);
+            padding: 3px 8px;
+            border-radius: 20px;
+            margin-left: auto;
+        }
+
+        .clear-filter {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 3px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            background: transparent;
+            border: none;
+        }
+
+        .clear-filter:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .slider {
+            margin: 8px 5px 5px 5px;
+        }
+
+        .noUi-target {
+            background: var(--border-color);
+            border: none;
+            box-shadow: none;
+            height: 5px;
+            border-radius: 3px;
+        }
+
+        .noUi-connect {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 3px;
+        }
+
+        .noUi-handle {
+            width: 16px !important;
+            height: 16px !important;
+            border-radius: 50% !important;
+            background: white !important;
+            border: 3px solid var(--primary-color) !important;
+            box-shadow: var(--shadow-md) !important;
+            top: -6px !important;
+            cursor: pointer;
+        }
+
+        .noUi-handle:before, .noUi-handle:after {
+            display: none !important;
+        }
+
+        .filter-select {
+            width: 100%;
+            min-height: 80px;
+            max-height: 120px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            padding: 4px;
+            background: white;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .filter-select option {
+            padding: 6px;
+            border-radius: 4px;
+        }
+
+        .filter-select option:checked {
+            background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+            color: white;
+        }
+
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+
+        /* Scrollbar styling */
+        #menu::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        #menu::-webkit-scrollbar-track {
+            background: var(--background-light);
+        }
+
+        #menu::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        #menu::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* Leaflet customizations */
+        .leaflet-control-search {
+            box-shadow: var(--shadow-lg) !important;
+            border-radius: var(--radius-lg) !important;
+            border: none !important;
+            overflow: hidden;
+        }
+
+        .leaflet-control-search .search-input {
+            font-family: 'Inter', sans-serif !important;
+            font-size: 0.85rem !important;
+            padding: 10px 15px !important;
+            border: none !important;
+            background: white !important;
+            min-width: 280px !important;
+        }
+
+        .leaflet-control-search .search-input:focus {
+            outline: none !important;
+            box-shadow: inset 0 0 0 2px var(--primary-color) !important;
+        }
+
+        .leaflet-control-search .search-button {
+            background: var(--primary-color) !important;
+            border: none !important;
+            padding: 10px 14px !important;
+            cursor: pointer !important;
+        }
+
+        .leaflet-control-search .search-button:hover {
+            background: var(--primary-dark) !important;
+        }
+
+        .leaflet-control-search .search-button:after {
+            content: '\f002' !important;
+            font-family: 'Font Awesome 5 Free' !important;
+            font-weight: 900 !important;
+            font-size: 14px !important;
+            color: white !important;
+        }
+
+        .leaflet-control-search .search-cancel {
+            background: #ef4444 !important;
+            border: none !important;
+        }
+
+        .leaflet-control-search .search-tooltip {
+            font-family: 'Inter', sans-serif !important;
+            border-radius: var(--radius-sm) !important;
+            box-shadow: var(--shadow-md) !important;
+            border: 1px solid var(--border-color) !important;
+            max-height: 300px !important;
+            overflow-y: auto !important;
+        }
+
+        .leaflet-control-search .search-tip {
+            padding: 10px 15px !important;
+            font-size: 0.8rem !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            cursor: pointer !important;
+            transition: all 0.2s !important;
+        }
+
+        .leaflet-control-search .search-tip:hover {
+            background: var(--background-light) !important;
+            color: var(--primary-color) !important;
+        }
+
+        .leaflet-control-search .search-tip-select {
+            background: var(--primary-color) !important;
+            color: white !important;
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: var(--radius-md) !important;
+            box-shadow: var(--shadow-lg) !important;
+        }
+
+        .leaflet-popup-content {
+            margin: 0 !important;
+            min-width: 280px;
+        }
+
+        .popup-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 12px 15px;
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
+            margin: -1px -1px 0 -1px;
+        }
+
+        .popup-header h3 {
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .popup-header .governorate {
+            font-size: 0.75rem;
+            opacity: 0.9;
+            margin-top: 3px;
+        }
+
+        .popup-body {
+            padding: 12px 15px;
+        }
+
+        .popup-section {
+            margin-bottom: 12px;
+        }
+
+        .popup-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .popup-section-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.3px;
+        }
+
+        .popup-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+
+        .popup-stat {
+            background: var(--background-light);
+            padding: 8px;
+            border-radius: var(--radius-sm);
+            text-align: center;
+        }
+
+        .popup-stat .value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .popup-stat .label {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .popup-stat.success .value { color: #10b981; }
+        .popup-stat.warning .value { color: #f59e0b; }
+        .popup-stat.danger .value { color: #ef4444; }
+
+        .vaccine-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+        }
+
+        .popup-grid.three-cols {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .vaccine-item {
+            background: var(--background-light);
+            padding: 4px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.65rem;
+        }
+
+        .vaccine-item .count {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        /* Summary Card */
+        .summary-card {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            width: 320px;
+            max-height: calc(100vh - 20px);
+            overflow-y: auto;
+            font-size: 0.85em;
+        }
+
+        .summary-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .summary-header h3 {
+            margin: 0;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .summary-header .facilities-count {
+            background: rgba(255,255,255,0.2);
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+        }
+
+        .summary-body {
+            padding: 10px;
+        }
+
+        .summary-section {
+            margin-bottom: 10px;
+        }
+
+        .summary-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .summary-section-title {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.3px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+
+        .summary-grid.four-cols {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .summary-grid.three-cols {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .summary-stat {
+            background: var(--background-light);
+            padding: 6px 4px;
+            border-radius: var(--radius-sm);
+            text-align: center;
+        }
+
+        .summary-stat .value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .summary-stat .label {
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+            margin-top: 1px;
+        }
+
+        .summary-stat.success .value { color: #10b981; }
+        .summary-stat.warning .value { color: #f59e0b; }
+        .summary-stat.danger .value { color: #ef4444; }
+
+        .vaccine-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+        }
+
+        .vaccine-summary-item {
+            background: var(--background-light);
+            padding: 6px 4px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .vaccine-summary-item .count {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .vaccine-summary-item .name {
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+        }
+
+        .visit-detail-section {
+            background: var(--background-light);
+            border-radius: var(--radius-sm);
+            padding: 8px;
+            margin-bottom: 6px;
+        }
+
+        .visit-detail-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .visit-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .visit-detail-header .visit-name {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .visit-detail-header .visit-total {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            background: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .vaccines-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .vaccine-badge {
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            border: 1px solid var(--border-color);
+        }
+
+        .vaccine-badge .vax-name {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .vaccine-badge .vax-count {
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            #menu {
+                width: 300px;
+                min-width: 300px;
+            }
+
+            .menu-header h1 {
+                font-size: 1rem;
+            }
+
+            .summary-card {
+                min-width: 280px;
+                max-width: 300px;
+                right: 10px;
+                top: 10px;
+            }
+        }
+        </style>
+    </head>
+    <body>
+        <div id="all">
+            <div id="menu">
+                <div class="menu-header">
+                    <h1><i class="fas fa-syringe"></i> Catch-Up Vaccination Tally Sheet</h1>
+                    <p>Round 2 | 18 Jan - 29 Jan 2026</p>
+                </div>
+                <div class="filters-container" id="filters-container">
+                    <!-- Filters will be added here dynamically -->
+                </div>
+            </div>
+            <div id="map">
+                <!-- Summary Card -->
+                <div class="summary-card" id="summary-card">
+                    <div class="summary-header">
+                        <h3><i class="fas fa-chart-bar"></i> Summary Statistics</h3>
+                        <span class="facilities-count" id="facilities-count">0 Facilities</span>
+                    </div>
+                    <div class="summary-body">
+                        <div class="summary-section">
+                            <div class="summary-section-title">Children Overview</div>
+                            <div class="summary-grid">
+                                <div class="summary-stat">
+                                    <div class="value" id="sum-total">0</div>
+                                    <div class="label">Total Children</div>
+                                </div>
+                                <div class="summary-stat success">
+                                    <div class="value" id="sum-onschedule">0</div>
+                                    <div class="label">On Schedule</div>
+                                </div>
+                                <div class="summary-stat warning">
+                                    <div class="value" id="sum-defaulter">0</div>
+                                    <div class="label">Defaulter</div>
+                                </div>
+                                <div class="summary-stat danger">
+                                    <div class="value" id="sum-zerodose">0</div>
+                                    <div class="label">Zero Dose</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="summary-section">
+                            <div class="summary-section-title">Age Groups</div>
+                            <div class="summary-grid three-cols">
+                                <div class="summary-stat">
+                                    <div class="value" id="sum-age012">0</div>
+                                    <div class="label">0-12 M</div>
+                                </div>
+                                <div class="summary-stat">
+                                    <div class="value" id="sum-age1224">0</div>
+                                    <div class="label">12-24 M</div>
+                                </div>
+                                <div class="summary-stat">
+                                    <div class="value" id="sum-age2436">0</div>
+                                    <div class="label">24+ M</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="summary-section">
+                            <div class="summary-section-title">Vaccination Visits with Vaccines</div>
+
+                            <!-- Visit 1: Birth -->
+                            <div class="visit-detail-section">
+                                <div class="visit-detail-header">
+                                    <span class="visit-name"><i class="fas fa-baby"></i> Visit 1: Birth</span>
+                                    <span class="visit-total" id="sum-v1">0</span>
+                                </div>
+                                <div class="vaccines-list">
+                                    <div class="vaccine-badge"><span class="vax-name">BCG</span><span class="vax-count" id="sum-bcg">0</span></div>
+                                    <div class="vaccine-badge"><span class="vax-name">HepB</span><span class="vax-count" id="sum-hepb">0</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Visit 2: 1 Month -->
+                            <div class="visit-detail-section">
+                                <div class="visit-detail-header">
+                                    <span class="visit-name"><i class="fas fa-syringe"></i> Visit 2: 1 Month</span>
+                                    <span class="visit-total" id="sum-v2">0</span>
+                                </div>
+                                <div class="vaccines-list">
+                                    <div class="vaccine-badge"><span class="vax-name">IPV1</span><span class="vax-count" id="sum-ipv1">0</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Visit 3: 2 Months -->
+                            <div class="visit-detail-section">
+                                <div class="visit-detail-header">
+                                    <span class="visit-name"><i class="fas fa-syringe"></i> Visit 3: 2 Months</span>
+                                    <span class="visit-total" id="sum-v3">0</span>
+                                </div>
+                                <div class="vaccines-list">
+                                    <div class="vaccine-badge"><span class="vax-name">IPV2</span><span class="vax-count" id="sum-ipv2">0</span></div>
+                                    <div class="vaccine-badge"><span class="vax-name">bOPV1</span><span class="vax-count" id="sum-bopv1">0</span></div>
+                                    <div class="vaccine-badge"><span class="vax-name">Rota1</span><span class="vax-count" id="sum-rota1">0</span></div>
+                                    <div class="vaccine-badge"><span class="vax-name">PCV1</span><span class="vax-count" id="sum-pcv1">0</span></div>
+                                    <div class="vaccine-badge"><span class="vax-name">Penta1</span><span class="vax-count" id="sum-penta1">0</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Visit 4: 4 Months -->
+                            <div class="visit-detail-section">
+                                <div class="visit-detail-header">
+                                    <span class="visit-name"><i class="fas fa-syringe"></i> Visit 4: 4 Months</span>
+                                    <span class="visit-total" id="sum-v4">0</span>
+                                </div>
+                                <div class="vaccines-list">
+                                    <div class="vaccine-badge"><span class="vax-name">bOPV2</span><span class="vax-count" id="sum-bopv2">0</span></div>
+                                    <div class="vaccine-badge"><span class="vax-name">Rota2</span><span class="vax-count" id="sum-rota2">0</span></div>
+                                    <div class="vaccine-badge"><span class="vax-name">PCV2</span><span class="vax-count" id="sum-pcv2">0</span></div>
+                                    <div class="vaccine-badge"><span class="vax-name">Penta2</span><span class="vax-count" id="sum-penta2">0</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Visit 5: 6 Months -->
+                            <div class="visit-detail-section">
+                                <div class="visit-detail-header">
+                                    <span class="visit-name"><i class="fas fa-syringe"></i> Visit 5: 6 Months</span>
+                                    <span class="visit-total" id="sum-v5">0</span>
+                                </div>
+                                <div class="vaccines-list">
+                                    <div class="vaccine-badge"><span class="vax-name">bOPV3</span><span class="vax-count" id="sum-bopv3">0</span></div>
+                                    <div class="vaccine-badge"><span class="vax-name">Rota3</span><span class="vax-count" id="sum-rota3">0</span></div>
+                                    <div class="vaccine-badge"><span class="vax-name">Penta3</span><span class="vax-count" id="sum-penta3">0</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Visit 6: 12 Months -->
+                            <div class="visit-detail-section">
+                                <div class="visit-detail-header">
+                                    <span class="visit-name"><i class="fas fa-syringe"></i> Visit 6: 12 Months</span>
+                                    <span class="visit-total" id="sum-v6">0</span>
+                                </div>
+                                <div class="vaccines-list">
+                                    <div class="vaccine-badge"><span class="vax-name">PCV3</span><span class="vax-count" id="sum-pcv3">0</span></div>
+                                    <div class="vaccine-badge"><span class="vax-name">MMR1</span><span class="vax-count" id="sum-mmr1">0</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Visit 7: 18 Months -->
+                            <div class="visit-detail-section">
+                                <div class="visit-detail-header">
+                                    <span class="visit-name"><i class="fas fa-syringe"></i> Visit 7: 18 Months</span>
+                                    <span class="visit-total" id="sum-v7">0</span>
+                                </div>
+                                <div class="vaccines-list">
+                                    <div class="vaccine-badge"><span class="vax-name">bOPV4</span><span class="vax-count" id="sum-bopv4">0</span></div>
+                                    <div class="vaccine-badge"><span class="vax-name">MMR2</span><span class="vax-count" id="sum-mmr2">0</span></div>
+                                    <div class="vaccine-badge"><span class="vax-name">DTP</span><span class="vax-count" id="sum-dtp">0</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/L.Control.Locate.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet.photon.js"></script>
+        <script src="js/leaflet-measure.js"></script>
+        <script src="js/leaflet-search.js"></script>
+        <script src="js/nouislider.min.js"></script>
+        <script src="js/wNumb.js"></script>
+        <script src="data/vaccination_data.js"></script>
+        <script>
+        var highlightLayer;
+        function highlightFeature(e) {
+            highlightLayer = e.target;
+            highlightLayer.setStyle({
+                fillColor: 'rgba(255, 255, 0, 1.00)',
+                fillOpacity: 1
+            });
+            highlightLayer.openPopup();
+        }
+
+        var map = L.map('map', {
+            zoomControl: false,
+            maxZoom: 28,
+            minZoom: 1
+        }).fitBounds([[31.20507802512429,34.119629865067616],[31.541582704655145,34.51231792690869]]);
+
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+
+        var zoomControl = L.control.zoom({ position: 'topleft' }).addTo(map);
+        L.control.locate({locateOptions: {maxZoom: 19}}).addTo(map);
+
+        var measureControl = new L.Control.Measure({
+            position: 'topleft',
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares'
+        });
+        measureControl.addTo(map);
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].innerHTML = '';
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].className += ' fas fa-ruler';
+
+        var bounds_group = new L.featureGroup([]);
+
+        map.createPane('pane_OpenStreetMap_0');
+        map.getPane('pane_OpenStreetMap_0').style.zIndex = 400;
+        var layer_OpenStreetMap_0 = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            pane: 'pane_OpenStreetMap_0',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 19
+        });
+        map.addLayer(layer_OpenStreetMap_0);
+
+        function pop_vaccination_data(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var p = feature.properties;
+
+            var popupContent = '<div class="popup-header">' +
+                '<h3>' + (p['Health Facility'] || '') + '</h3>' +
+                '<div class="governorate"><i class="fas fa-map-marker-alt"></i> ' + (p['Governorate'] || '') + '</div>' +
+                '</div>' +
+                '<div class="popup-body">' +
+
+                '<div class="popup-section">' +
+                '<div class="popup-section-title">Children Summary</div>' +
+                '<div class="popup-grid">' +
+                '<div class="popup-stat"><div class="value">' + (p['Total Children'] || 0) + '</div><div class="label">Total</div></div>' +
+                '<div class="popup-stat success"><div class="value">' + (p['On Schedule'] || 0) + '</div><div class="label">On Schedule</div></div>' +
+                '<div class="popup-stat warning"><div class="value">' + (p['Defaulter'] || 0) + '</div><div class="label">Defaulter</div></div>' +
+                '<div class="popup-stat danger"><div class="value">' + (p['Zero Dose'] || 0) + '</div><div class="label">Zero Dose</div></div>' +
+                '</div></div>' +
+
+                '<div class="popup-section">' +
+                '<div class="popup-section-title">Age Groups (Target: 0-36 Months)</div>' +
+                '<div class="popup-grid three-cols">' +
+                '<div class="popup-stat"><div class="value">' + (p['Age 0-12'] || 0) + '</div><div class="label">0-12 M</div></div>' +
+                '<div class="popup-stat"><div class="value">' + (p['Age 12-24'] || 0) + '</div><div class="label">12-24 M</div></div>' +
+                '<div class="popup-stat"><div class="value">' + (p['Age 24+'] || 0) + '</div><div class="label">24+ M</div></div>' +
+                '</div></div>' +
+
+                '<div class="popup-section">' +
+                '<div class="popup-section-title">Vaccines Given</div>' +
+                '<div class="vaccine-grid">' +
+                '<div class="vaccine-item"><div class="count">' + (p['BCG'] || 0) + '</div>BCG</div>' +
+                '<div class="vaccine-item"><div class="count">' + (p['Hep'] || 0) + '</div>HepB</div>' +
+                '<div class="vaccine-item"><div class="count">' + (p['IPV1'] || 0) + '</div>IPV1</div>' +
+                '<div class="vaccine-item"><div class="count">' + (p['IPV2'] || 0) + '</div>IPV2</div>' +
+                '<div class="vaccine-item"><div class="count">' + (p['Penta1'] || 0) + '</div>Penta1</div>' +
+                '<div class="vaccine-item"><div class="count">' + (p['Penta2'] || 0) + '</div>Penta2</div>' +
+                '<div class="vaccine-item"><div class="count">' + (p['Penta3'] || 0) + '</div>Penta3</div>' +
+                '<div class="vaccine-item"><div class="count">' + (p['MMR1'] || 0) + '</div>MMR1</div>' +
+                '<div class="vaccine-item"><div class="count">' + (p['MMR2'] || 0) + '</div>MMR2</div>' +
+                '</div></div>' +
+
+                '</div>';
+
+            layer.bindPopup(popupContent, { maxHeight: 450, maxWidth: 320 });
+        }
+
+        function style_vaccination_data_0(feature) {
+            var totalChildren = feature.properties['Total Children'] || 0;
+
+            // Circle size based on total children (adjusted for aggregated data range 0-1262)
+            var radius;
+            if (totalChildren === 0) {
+                radius = 4;
+            } else if (totalChildren <= 50) {
+                radius = 6;
+            } else if (totalChildren <= 100) {
+                radius = 8;
+            } else if (totalChildren <= 200) {
+                radius = 10;
+            } else if (totalChildren <= 400) {
+                radius = 14;
+            } else if (totalChildren <= 700) {
+                radius = 18;
+            } else {
+                radius = 24;
+            }
+
+            // Color based on governorate
+            var colors = {
+                'Gaza': '#e74c3c',
+                'North Gaza': '#9b59b6',
+                'Middle zone': '#3498db',
+                'Khan Younis': '#2ecc71',
+                'Rafah': '#f39c12'
+            };
+            var fillColor = colors[feature.properties['Governorate']] || '#95a5a6';
+
+            return {
+                pane: 'pane_vaccination_data',
+                radius: radius,
+                opacity: 1,
+                color: '#2c3e50',
+                dashArray: '',
+                lineCap: 'round',
+                lineJoin: 'round',
+                weight: 2,
+                fill: true,
+                fillOpacity: 0.8,
+                fillColor: fillColor,
+                interactive: true,
+            };
+        }
+
+        map.createPane('pane_vaccination_data');
+        map.getPane('pane_vaccination_data').style.zIndex = 401;
+        map.getPane('pane_vaccination_data').style['mix-blend-mode'] = 'normal';
+
+        var layer_vaccination_data = new L.geoJson(json_vaccination_data, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_vaccination_data',
+            layerName: 'layer_vaccination_data',
+            pane: 'pane_vaccination_data',
+            onEachFeature: pop_vaccination_data,
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, style_vaccination_data_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_vaccination_data);
+        map.addLayer(layer_vaccination_data);
+
+        // Search control
+        var searchControl = new L.Control.Search({
+            layer: layer_vaccination_data,
+            initial: false,
+            hideMarkerOnCollapse: true,
+            propertyName: 'Health Facility',
+            textPlaceholder: 'Search health facility...',
+            position: 'topleft',
+            zoom: 16,
+            marker: false,
+            minLength: 1,
+            autoType: false,
+            tipAutoSubmit: true,
+            moveToLocation: function(latlng, title, map) {
+                map.setView(latlng, 16);
+            }
+        });
+        map.addControl(searchControl);
+
+        searchControl.on('search:locationfound', function(e) {
+            if (e.layer) {
+                map.setView(e.latlng, 16);
+                setTimeout(function() {
+                    e.layer.openPopup();
+                    var originalStyle = style_vaccination_data_0(e.layer.feature);
+                    e.layer.setStyle({ fillColor: '#ffeb3b', fillOpacity: 1 });
+                    setTimeout(function() {
+                        e.layer.setStyle(originalStyle);
+                    }, 1000);
+                }, 300);
+            }
+        });
+
+        // Filter functionality
+        var Filters = {
+            "Governorate": "str",
+            "Health Facility": "str",
+            "Total Children": "int",
+            "On Schedule": "int",
+            "Defaulter": "int",
+            "Zero Dose": "int",
+            "BCG": "int",
+            "Hep": "int",
+            "IPV1": "int",
+            "Penta1": "int",
+            "Penta2": "int",
+            "Penta3": "int",
+            "bOPV1": "int",
+            "bOPV3": "int",
+            "bOPV4": "int",
+            "PCV1": "int",
+            "PCV3": "int",
+            "MMR1": "int",
+            "MMR2": "int",
+            "DTP": "int"
+        };
+
+        function filterFunc() {
+            map.eachLayer(function(lyr) {
+                if ("options" in lyr && "dataVar" in lyr["options"]) {
+                    var features = window[lyr["options"]["dataVar"]].features.slice(0);
+                    try {
+                        for (var key in Filters) {
+                            var keyS = key.replace(/[^a-zA-Z0-9_]/g, "");
+                            if (Filters[key] == "str") {
+                                var selection = [];
+                                var el = document.getElementById("sel_" + keyS);
+                                if (!el) continue;
+                                var options = el.options;
+                                for (var i = 0; i < options.length; i++) {
+                                    if (options[i].selected) selection.push(options[i].value);
+                                }
+                                try {
+                                    if (key in features[0].properties) {
+                                        for (var i = features.length - 1; i >= 0; --i) {
+                                            if (selection.indexOf(features[i].properties[key]) < 0 && selection.length > 0) {
+                                                features.splice(i, 1);
+                                            }
+                                        }
+                                    }
+                                } catch(err) {}
+                            }
+                            if (Filters[key] == "int") {
+                                var sliderEl = document.getElementById("div_" + keyS);
+                                if (!sliderEl || !sliderEl.noUiSlider) continue;
+                                var sliderVals = sliderEl.noUiSlider.get();
+                                try {
+                                    if (key in features[0].properties) {
+                                        for (var i = features.length - 1; i >= 0; --i) {
+                                            var val = parseInt(features[i].properties[key]) || 0;
+                                            if (val < parseInt(sliderVals[0]) || val > parseInt(sliderVals[1])) {
+                                                features.splice(i, 1);
+                                            }
+                                        }
+                                    }
+                                } catch(err) {}
+                            }
+                        }
+                    } catch(err) {}
+                    window[lyr["options"]["layerName"]].clearLayers();
+                    window[lyr["options"]["layerName"]].addData(features);
+
+                    // Update summary card
+                    updateSummaryCard(features);
+                }
+            });
+        }
+
+        // Update Summary Card function
+        function updateSummaryCard(features) {
+            var totalChildren = 0;
+            var onSchedule = 0;
+            var defaulter = 0;
+            var zeroDose = 0;
+            var age012 = 0;
+            var age1224 = 0;
+            var age2436 = 0;
+            var v1 = 0, v2 = 0, v3 = 0, v4 = 0, v5 = 0, v6 = 0, v7 = 0;
+
+            // Individual vaccines
+            var bcg = 0, hepb = 0;
+            var ipv1 = 0, ipv2 = 0;
+            var penta1 = 0, penta2 = 0, penta3 = 0;
+            var bopv1 = 0, bopv2 = 0, bopv3 = 0, bopv4 = 0;
+            var rota1 = 0, rota2 = 0, rota3 = 0;
+            var pcv1 = 0, pcv2 = 0, pcv3 = 0;
+            var mmr1 = 0, mmr2 = 0;
+            var dtp = 0;
+
+            features.forEach(function(f) {
+                var p = f.properties;
+                totalChildren += p['Total Children'] || 0;
+                onSchedule += p['On Schedule'] || 0;
+                defaulter += p['Defaulter'] || 0;
+                zeroDose += p['Zero Dose'] || 0;
+                age012 += p['Age 0-12'] || 0;
+                age1224 += p['Age 12-24'] || 0;
+                age2436 += p['Age 24+'] || 0;
+                // Calculate visits from individual vaccines
+                v1 += (p['BCG'] || 0) + (p['Hep'] || 0);
+                v2 += p['IPV1'] || 0;
+                v3 += (p['IPV2'] || 0) + (p['bOPV1'] || 0) + (p['Rota1'] || 0) + (p['PCV1'] || 0) + (p['Penta1'] || 0);
+                v4 += (p['bOPV2'] || 0) + (p['Rota2'] || 0) + (p['PCV2'] || 0) + (p['Penta2'] || 0);
+                v5 += (p['bOPV3'] || 0) + (p['Rota3'] || 0) + (p['Penta3'] || 0);
+                v6 += (p['PCV3'] || 0) + (p['MMR1'] || 0);
+                v7 += (p['bOPV4'] || 0) + (p['MMR2'] || 0) + (p['DTP'] || 0);
+
+                // Individual vaccines
+                bcg += p['BCG'] || 0;
+                hepb += p['Hep'] || 0;
+                ipv1 += p['IPV1'] || 0;
+                ipv2 += p['IPV2'] || 0;
+                penta1 += p['Penta1'] || 0;
+                penta2 += p['Penta2'] || 0;
+                penta3 += p['Penta3'] || 0;
+                bopv1 += p['bOPV1'] || 0;
+                bopv2 += p['bOPV2'] || 0;
+                bopv3 += p['bOPV3'] || 0;
+                bopv4 += p['bOPV4'] || 0;
+                rota1 += p['Rota1'] || 0;
+                rota2 += p['Rota2'] || 0;
+                rota3 += p['Rota3'] || 0;
+                pcv1 += p['PCV1'] || 0;
+                pcv2 += p['PCV2'] || 0;
+                pcv3 += p['PCV3'] || 0;
+                mmr1 += p['MMR1'] || 0;
+                mmr2 += p['MMR2'] || 0;
+                dtp += p['DTP'] || 0;
+            });
+
+            // Format numbers with commas
+            function formatNum(n) {
+                return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            }
+
+            document.getElementById('facilities-count').textContent = features.length + ' Facilities';
+            document.getElementById('sum-total').textContent = formatNum(totalChildren);
+            document.getElementById('sum-onschedule').textContent = formatNum(onSchedule);
+            document.getElementById('sum-defaulter').textContent = formatNum(defaulter);
+            document.getElementById('sum-zerodose').textContent = formatNum(zeroDose);
+            document.getElementById('sum-age012').textContent = formatNum(age012);
+            document.getElementById('sum-age1224').textContent = formatNum(age1224);
+            document.getElementById('sum-age2436').textContent = formatNum(age2436);
+
+            // Visit totals
+            document.getElementById('sum-v1').textContent = formatNum(v1);
+            document.getElementById('sum-v2').textContent = formatNum(v2);
+            document.getElementById('sum-v3').textContent = formatNum(v3);
+            document.getElementById('sum-v4').textContent = formatNum(v4);
+            document.getElementById('sum-v5').textContent = formatNum(v5);
+            document.getElementById('sum-v6').textContent = formatNum(v6);
+            document.getElementById('sum-v7').textContent = formatNum(v7);
+
+            // Individual vaccines
+            document.getElementById('sum-bcg').textContent = formatNum(bcg);
+            document.getElementById('sum-hepb').textContent = formatNum(hepb);
+            document.getElementById('sum-ipv1').textContent = formatNum(ipv1);
+            document.getElementById('sum-ipv2').textContent = formatNum(ipv2);
+            document.getElementById('sum-penta1').textContent = formatNum(penta1);
+            document.getElementById('sum-penta2').textContent = formatNum(penta2);
+            document.getElementById('sum-penta3').textContent = formatNum(penta3);
+            document.getElementById('sum-bopv1').textContent = formatNum(bopv1);
+            document.getElementById('sum-bopv2').textContent = formatNum(bopv2);
+            document.getElementById('sum-bopv3').textContent = formatNum(bopv3);
+            document.getElementById('sum-bopv4').textContent = formatNum(bopv4);
+            document.getElementById('sum-rota1').textContent = formatNum(rota1);
+            document.getElementById('sum-rota2').textContent = formatNum(rota2);
+            document.getElementById('sum-rota3').textContent = formatNum(rota3);
+            document.getElementById('sum-pcv1').textContent = formatNum(pcv1);
+            document.getElementById('sum-pcv2').textContent = formatNum(pcv2);
+            document.getElementById('sum-pcv3').textContent = formatNum(pcv3);
+            document.getElementById('sum-mmr1').textContent = formatNum(mmr1);
+            document.getElementById('sum-mmr2').textContent = formatNum(mmr2);
+            document.getElementById('sum-dtp').textContent = formatNum(dtp);
+        }
+
+        // Create filter UI
+        var filtersContainer = document.getElementById("filters-container");
+
+        // === GENERAL FILTERS ===
+        var generalTitle = document.createElement('div');
+        generalTitle.className = 'section-title';
+        generalTitle.innerHTML = '<i class="fas fa-filter"></i> General Filters';
+        filtersContainer.appendChild(generalTitle);
+
+        // Governorate filter
+        var govSection = document.createElement('div');
+        govSection.className = 'filter-section';
+        govSection.innerHTML = '<div class="filter-label"><i class="fas fa-map-marker-alt"></i> Governorate <button class="clear-filter" onclick="clearSelect(\'sel_Governorate\')">Clear</button></div>';
+        var govSelect = document.createElement('select');
+        govSelect.multiple = true;
+        govSelect.size = 5;
+        govSelect.id = "sel_Governorate";
+        govSelect.className = "filter-select";
+        govSelect.onchange = filterFunc;
+        govSelect.innerHTML = '<option value="Gaza">Gaza</option><option value="Khan Younis">Khan Younis</option><option value="Middle zone">Middle Zone</option><option value="North Gaza">North Gaza</option><option value="Rafah">Rafah</option>';
+        govSection.appendChild(govSelect);
+        filtersContainer.appendChild(govSection);
+
+        // Health Facility filter
+        var facilitySection = document.createElement('div');
+        facilitySection.className = 'filter-section';
+        facilitySection.innerHTML = '<div class="filter-label"><i class="fas fa-hospital"></i> Health Facility <button class="clear-filter" onclick="clearSelect(\'sel_HealthFacility\')">Clear</button></div>';
+        var facilitySelect = document.createElement('select');
+        facilitySelect.multiple = true;
+        facilitySelect.size = 6;
+        facilitySelect.id = "sel_HealthFacility";
+        facilitySelect.className = "filter-select";
+        facilitySelect.onchange = filterFunc;
+
+        var facilities = [];
+        json_vaccination_data.features.forEach(function(f) {
+            var name = f.properties['Health Facility'];
+            if (name && facilities.indexOf(name) === -1) {
+                facilities.push(name);
+            }
+        });
+        facilities.sort();
+
+        var facilityOptions = '';
+        facilities.forEach(function(f) {
+            facilityOptions += '<option value="' + f.replace(/"/g, '&quot;') + '">' + f + '</option>';
+        });
+        facilitySelect.innerHTML = facilityOptions;
+        facilitySection.appendChild(facilitySelect);
+        filtersContainer.appendChild(facilitySection);
+
+        // === CHILDREN STATUS ===
+        var statusTitle = document.createElement('div');
+        statusTitle.className = 'section-title';
+        statusTitle.innerHTML = '<i class="fas fa-child"></i> Children Status';
+        filtersContainer.appendChild(statusTitle);
+
+        // Total Children slider
+        createSlider('Total Children', 'TotalChildren', 'fa-users', 0, 1300);
+        createSlider('On Schedule', 'OnSchedule', 'fa-calendar-check', 0, 1200);
+        createSlider('Defaulter', 'Defaulter', 'fa-user-clock', 0, 200);
+        createSlider('Zero Dose', 'ZeroDose', 'fa-ban', 0, 30);
+
+        // === VACCINATION VISITS ===
+        var visitsTitle = document.createElement('div');
+        visitsTitle.className = 'section-title';
+        visitsTitle.innerHTML = '<i class="fas fa-syringe"></i> Vaccines (Palestinian Schedule)';
+        filtersContainer.appendChild(visitsTitle);
+
+        // Birth vaccines
+        createSlider('BCG (Birth)', 'BCG', 'fa-baby', 0, 320);
+        createSlider('HepB (Birth)', 'Hep', 'fa-baby', 0, 320);
+
+        // 1 Month
+        createSlider('IPV1 (1 Month)', 'IPV1', 'fa-syringe', 0, 160);
+
+        // 2 Months vaccines
+        createSlider('Penta1 (2 Months)', 'Penta1', 'fa-syringe', 0, 260);
+        createSlider('bOPV1 (2 Months)', 'bOPV1', 'fa-syringe', 0, 260);
+        createSlider('PCV1 (2 Months)', 'PCV1', 'fa-syringe', 0, 260);
+
+        // 4-6 Months
+        createSlider('Penta2 (4 Months)', 'Penta2', 'fa-syringe', 0, 200);
+        createSlider('Penta3 (6 Months)', 'Penta3', 'fa-syringe', 0, 160);
+        createSlider('bOPV3 (6 Months)', 'bOPV3', 'fa-syringe', 0, 160);
+
+        // 12 Months
+        createSlider('PCV3 (12 Months)', 'PCV3', 'fa-syringe', 0, 150);
+        createSlider('MMR1 (12 Months)', 'MMR1', 'fa-syringe', 0, 150);
+
+        // 18 Months
+        createSlider('bOPV4 (18 Months)', 'bOPV4', 'fa-syringe', 0, 90);
+        createSlider('MMR2 (18 Months)', 'MMR2', 'fa-syringe', 0, 100);
+        createSlider('DTP (18 Months)', 'DTP', 'fa-syringe', 0, 80);
+
+        function createSlider(label, id, icon, min, max) {
+            var section = document.createElement('div');
+            section.className = 'filter-section';
+            section.innerHTML = '<div class="filter-label"><i class="fas ' + icon + '"></i> ' + label + ' <span class="filter-value" id="val_' + id + '">' + min + ' - ' + max + '</span> <button class="clear-filter" onclick="resetSlider(\'div_' + id + '\')">Clear</button></div>';
+            var slider = document.createElement('div');
+            slider.id = 'div_' + id;
+            slider.className = 'slider';
+            section.appendChild(slider);
+            filtersContainer.appendChild(section);
+
+            noUiSlider.create(slider, {
+                connect: true,
+                start: [min, max],
+                step: 1,
+                format: wNumb({ decimals: 0 }),
+                range: { min: min, max: max }
+            });
+            slider.noUiSlider.on('update', function(values) {
+                document.getElementById('val_' + id).innerHTML = values.join(' - ');
+                filterFunc();
+            });
+        }
+
+        // Helper functions
+        function clearSelect(selectId) {
+            var el = document.getElementById(selectId);
+            if (!el) return;
+            var options = el.options;
+            for (var i = 0; i < options.length; i++) {
+                options[i].selected = false;
+            }
+            filterFunc();
+        }
+
+        function resetSlider(sliderId) {
+            var el = document.getElementById(sliderId);
+            if (el && el.noUiSlider) {
+                el.noUiSlider.reset();
+            }
+        }
+
+        // Initialize summary card with all data on page load
+        updateSummaryCard(json_vaccination_data.features);
+        </script>
+    </body>
+</html>

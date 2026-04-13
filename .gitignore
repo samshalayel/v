@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+
+# Excel and XML processing files (keeping only final output)
+sheet_data.xml
+xl/
+
+# Keep these files:
+# - aggregated_data.json (aggregated statistics)
+# - facility_coordinates.json (coordinates mapping)
+# - *.py (scripts for reference)

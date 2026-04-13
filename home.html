@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catch-Up Vaccination Campaign - Round 2</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header with logos */
+        .header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 60px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .logo {
+            height: 80px;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        /* Main content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 20px;
+        }
+
+        .title-section {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .title-section h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 15px;
+            letter-spacing: -1px;
+        }
+
+        .title-section p {
+            font-size: 1.2rem;
+            color: #6c757d;
+            max-width: 600px;
+            line-height: 1.6;
+        }
+
+        /* Cards container */
+        .cards-container {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Card styles */
+        .card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 50px 40px;
+            width: 380px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid #e9ecef;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--card-color-start), var(--card-color-end));
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+            border-color: transparent;
+        }
+
+        .card-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            font-size: 45px;
+            background: linear-gradient(135deg, var(--card-color-start), var(--card-color-end));
+            color: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .card h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 15px;
+        }
+
+        .card p {
+            font-size: 1rem;
+            color: #6c757d;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .card-btn {
+            display: inline-block;
+            padding: 14px 40px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            color: white;
+            background: linear-gradient(135deg, var(--card-color-start), var(--card-color-end));
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .card-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+        }
+
+        /* Card 1 - Summary Sheets */
+        .card-summary {
+            --card-color-start: #667eea;
+            --card-color-end: #764ba2;
+        }
+
+        /* Card 2 - Daily Entries */
+        .card-daily {
+            --card-color-start: #11998e;
+            --card-color-end: #38ef7d;
+        }
+
+        /* Footer */
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .header {
+                flex-wrap: wrap;
+                gap: 30px;
+                padding: 20px;
+            }
+
+            .logo {
+                height: 60px;
+            }
+
+            .title-section h1 {
+                font-size: 2rem;
+            }
+
+            .cards-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .card {
+                width: 100%;
+                max-width: 380px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+       
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="title-section">
+            <h1>Catch-Up Vaccination Campaign</h1>
+            <p style="font-size: 1.4rem; color: #667eea; font-weight: 600; margin-bottom: 10px;">Round 2 | 18 Jan - 29 Jan 2026</p>
+            <p>Comprehensive monitoring and tracking system for childhood catch-up vaccination campaign in Gaza Strip</p>
+        </div>
+
+        <div class="cards-container">
+            <!-- Card 1: Tally Sheet -->
+            <div class="card card-summary" onclick="window.location.href='index.html'">
+                <div class="card-icon">
+                    <span>&#128202;</span>
+                </div>
+                <h2>Catch-Up Vaccination Tally Sheet</h2>
+                <p>Aggregated vaccination data from health facility tally reports. View consolidated statistics and trends across all centers.</p>
+                <a href="index.html" class="card-btn">View Dashboard</a>
+            </div>
+
+            <!-- Card 2: Daily Summary -->
+            <div class="card card-daily" onclick="window.location.href='health_facilities_map.html'">
+                <div class="card-icon">
+                    <span>&#128197;</span>
+                </div>
+                <h2>Catch-Up Vaccination Daily Summary Sheet</h2>
+                <p>Individual vaccination records from daily data entry system. Track real-time progress and detailed child-level information.</p>
+                <a href="health_facilities_map.html" class="card-btn">View Dashboard</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 Gaza Vaccination Program. Ministry of Health - Palestine</p>
+    </footer>
+</body>
+</html>

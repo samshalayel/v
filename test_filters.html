@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Filter Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            direction: rtl;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: right;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>تقرير اختبار الفلاتر</h1>
+    <div id="results"></div>
+
+    <script src="data/location_point_unified_corrected_1.js"></script>
+    <script>
+        const results = [];
+
+        // Test 1: Check if data is loaded
+        if (typeof json_location_point_unified_corrected_1 !== 'undefined') {
+            results.push({
+                test: 'تحميل ملف البيانات',
+                status: 'نجح',
+                details: `تم تحميل ${json_location_point_unified_corrected_1.features.length} نقطة`
+            });
+        } else {
+            results.push({
+                test: 'تحميل ملف البيانات',
+                status: 'فشل',
+                details: 'الملف غير موجود'
+            });
+        }
+
+        // Test 2: Check required fields
+        const requiredFields = [
+            'Governorate',
+            'Health Facility',
+            'Suppervisor Name',
+            'Vaccination status of a Child | On Schedule',
+            'Vaccination status of a Child | Defaulter',
+            'Vaccination status of a Child | Zero Dose',
+            'Total Children Vaccinated by Age | above 24',
+            'Total Children Vaccinated by Age | 0 to 12',
+            'Total Children Vaccinated by Age | 12 to 24',
+            'all_child'
+        ];
+
+        const firstFeature = json_location_point_unified_corrected_1.features[0];
+        requiredFields.forEach(field => {
+            if (field in firstFeature.properties) {
+                results.push({
+                    test: `الحقل: ${field}`,
+                    status: 'نجح',
+                    details: `القيمة: ${firstFeature.properties[field]}`
+                });
+            } else {
+                results.push({
+                    test: `الحقل: ${field}`,
+                    status: 'فشل',
+                    details: 'الحقل غير موجود'
+                });
+            }
+        });
+
+        // Test 3: Check Governorate values
+        const governorates = new Set();
+        json_location_point_unified_corrected_1.features.forEach(feature => {
+            if (feature.properties.Governorate) {
+                governorates.add(feature.properties.Governorate);
+            }
+        });
+
+        results.push({
+            test: 'قيم المحافظات',
+            status: 'نجح',
+            details: `المحافظات: ${Array.from(governorates).join(', ')}`
+        });
+
+        // Test 4: Count features per governorate
+        const govCounts = {};
+        json_location_point_unified_corrected_1.features.forEach(feature => {
+            const gov = feature.properties.Governorate || 'غير محدد';
+            govCounts[gov] = (govCounts[gov] || 0) + 1;
+        });
+
+        Object.keys(govCounts).forEach(gov => {
+            results.push({
+                test: `عدد النقاط في ${gov}`,
+                status: 'معلومة',
+                details: `${govCounts[gov]} نقطة`
+            });
+        });
+
+        // Display results
+        let html = '<table><tr><th>الاختبار</th><th>الحالة</th><th>التفاصيل</th></tr>';
+        results.forEach(result => {
+            const statusClass = result.status === 'نجح' ? 'success' : (result.status === 'فشل' ? 'error' : '');
+            html += `<tr>
+                <td>${result.test}</td>
+                <td class="${statusClass}">${result.status}</td>
+                <td>${result.details}</td>
+            </tr>`;
+        });
+        html += '</table>';
+
+        document.getElementById('results').innerHTML = html;
+    </script>
+</body>
+</html>

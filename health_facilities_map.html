@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaza Vaccination Dashboard - Health Facilities Summary</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', 'Segoe UI', sans-serif; }
+        #map { position: absolute; top: 0; bottom: 0; left: 0; right: 0; z-index: 1; }
+
+        .header {
+            position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 1000;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 10px 25px; border-radius: 10px; color: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3); text-align: center;
+        }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header p { font-size: 11px; color: #aaa; margin-top: 3px; }
+
+        .stats-row {
+            position: fixed; top: 75px; left: 12px; z-index: 1000;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .stat-card {
+            padding: 12px 16px; border-radius: 10px; color: white;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.2); text-align: center; min-width: 110px;
+        }
+        .stat-card.purple { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .stat-card.green { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .stat-card.red { background: linear-gradient(135deg, #eb3349, #f45c43); }
+        .stat-card .num { font-size: 24px; font-weight: 700; }
+        .stat-card .label { font-size: 10px; margin-top: 2px; opacity: 0.95; }
+        .stat-card .label-ar { font-size: 9px; opacity: 0.7; }
+
+        .panel {
+            position: fixed; z-index: 1000;
+            background: white; padding: 10px; border-radius: 8px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.12); font-size: 11px;
+            width: 220px;
+        }
+        .panel h4 {
+            margin: 0 0 8px 0; padding-bottom: 6px;
+            border-bottom: 2px solid; font-size: 12px; font-weight: 600;
+        }
+        .panel h4.top { color: #11998e; border-color: #11998e; }
+        .panel h4.low { color: #eb3349; border-color: #eb3349; }
+
+        .rank-list { max-height: 240px; overflow-y: auto; }
+        .rank-item {
+            display: flex; align-items: center; padding: 5px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .rank-num {
+            width: 18px; height: 18px; border-radius: 50%;
+            background: #f0f0f0; text-align: center; line-height: 18px;
+            font-size: 9px; font-weight: 600; margin-right: 6px; flex-shrink: 0;
+        }
+        .rank-name { flex: 1; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .rank-value { font-weight: 600; font-size: 11px; margin-left: 5px; }
+        .rank-value.top { color: #11998e; }
+        .rank-value.low { color: #eb3349; }
+
+        .top-panel { top: 75px; right: 12px; }
+        .low-panel { top: 380px; right: 12px; }
+
+        .legend {
+            position: fixed; bottom: 20px; left: 12px; z-index: 1000;
+            background: white; padding: 10px; border-radius: 8px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.12);
+        }
+        .legend h4 { margin: 0 0 6px 0; font-size: 11px; font-weight: 600; }
+        .legend-item { display: flex; align-items: center; margin: 3px 0; font-size: 10px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+
+        .bcg-panel {
+            position: fixed; bottom: 20px; right: 12px; z-index: 1000;
+            background: white; padding: 12px; border-radius: 8px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.12); width: 140px; text-align: center;
+        }
+        .bcg-panel h4 { margin: 0 0 6px 0; font-size: 11px; color: #4a90d9; font-weight: 600; }
+        .bcg-total { font-size: 22px; font-weight: 700; color: #4a90d9; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <div class="header">
+        <h1><i class="fas fa-syringe"></i> Gaza Vaccination Dashboard</h1>
+        <p>Round 2 | 18 Jan - 29 Jan 2026</p>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-card purple">
+            <div class="num">125</div>
+            <div class="label">Health Centers</div>
+            <div class="label-ar">المراكز الصحية</div>
+        </div>
+        <div class="stat-card green">
+            <div class="num">15,678</div>
+            <div class="label">Children</div>
+            <div class="label-ar">الأطفال</div>
+        </div>
+        <div class="stat-card red">
+            <div class="num">45,463</div>
+            <div class="label">Vaccinations</div>
+            <div class="label-ar">التطعيمات</div>
+        </div>
+    </div>
+
+    <div class="panel top-panel">
+        <h4 class="top">🏆 Top 10 Centers</h4>
+        <div class="rank-list">
+            <div class="rank-item"><span class="rank-num">1</span><span class="rank-name">Al-Daraj Martyrs Center</span><span class="rank-value top">3,853</span></div>
+<div class="rank-item"><span class="rank-num">2</span><span class="rank-name">Nusairat Health Center</span><span class="rank-value top">2,315</span></div>
+<div class="rank-item"><span class="rank-num">3</span><span class="rank-name">Asma Medical Point-Asma Prep...</span><span class="rank-value top">1,821</span></div>
+<div class="rank-item"><span class="rank-num">4</span><span class="rank-name">Masqat Al Sabra PHC</span><span class="rank-value top">1,735</span></div>
+<div class="rank-item"><span class="rank-num">5</span><span class="rank-name">Japanese HC - UNRWA</span><span class="rank-value top">1,704</span></div>
+<div class="rank-item"><span class="rank-num">6</span><span class="rank-name">Deir El Balah Health Center</span><span class="rank-value top">1,661</span></div>
+<div class="rank-item"><span class="rank-num">7</span><span class="rank-name">Al Shaeikh Radwan PHC</span><span class="rank-value top">1,429</span></div>
+<div class="rank-item"><span class="rank-num">8</span><span class="rank-name">Fathi Arafat PHC - PRCS</span><span class="rank-value top">1,172</span></div>
+<div class="rank-item"><span class="rank-num">9</span><span class="rank-name">Giving Without Borders Medic...</span><span class="rank-value top">1,158</span></div>
+<div class="rank-item"><span class="rank-num">10</span><span class="rank-name">Mawasi HC - UNRWA</span><span class="rank-value top">1,152</span></div>
+
+        </div>
+    </div>
+
+    <div class="panel low-panel">
+        <h4 class="low">📉 Low 10 Centers</h4>
+        <div class="rank-list">
+            <div class="rank-item"><span class="rank-num">1</span><span class="rank-name">Al zawidah Medical Point - P...</span><span class="rank-value low">20</span></div>
+<div class="rank-item"><span class="rank-num">2</span><span class="rank-name">Yafa Hospital</span><span class="rank-value low">23</span></div>
+<div class="rank-item"><span class="rank-num">3</span><span class="rank-name">Al musadar Center</span><span class="rank-value low">28</span></div>
+<div class="rank-item"><span class="rank-num">4</span><span class="rank-name">Al-Tawbah MP</span><span class="rank-value low">28</span></div>
+<div class="rank-item"><span class="rank-num">5</span><span class="rank-name">Free thoughts</span><span class="rank-value low">29</span></div>
+<div class="rank-item"><span class="rank-num">6</span><span class="rank-name">Palestinian Medical Center</span><span class="rank-value low">30</span></div>
+<div class="rank-item"><span class="rank-num">7</span><span class="rank-name">Tayara Clinic</span><span class="rank-value low">32</span></div>
+<div class="rank-item"><span class="rank-num">8</span><span class="rank-name">Teb Alosra</span><span class="rank-value low">38</span></div>
+<div class="rank-item"><span class="rank-num">9</span><span class="rank-name">Al-Mustafa Medical Point</span><span class="rank-value low">39</span></div>
+<div class="rank-item"><span class="rank-num">10</span><span class="rank-name">AL EQLEMI</span><span class="rank-value low">40</span></div>
+
+        </div>
+    </div>
+
+    <div class="legend">
+        <h4>Organizations</h4>
+        <div class="legend-item"><div class="legend-dot" style="background: #3498db;"></div> UNRWA</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #27ae60;"></div> MOH</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #e74c3c;"></div> PRCS</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #9b59b6;"></div> MSF Belgium</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #f39c12;"></div> MSF Spain</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #2c3e50;"></div> MDM</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #1abc9c;"></div> UK MED</div>
+    </div>
+
+    <div class="bcg-panel">
+        <h4><i class="fas fa-syringe"></i> Total BCG</h4>
+        <div class="bcg-total">2,669</div>
+    </div>
+
+    <script>
+        var map = L.map('map').setView([31.4, 34.35], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+    L.circleMarker([31.342833, 34.3001036], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>AHED MP</b><br>Governorate: Khan Younis<br>Children: 96<br>Vaccinations: 265');
+    L.circleMarker([31.354556, 34.281083], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>ALKHAIR HOSPITAL</b><br>Governorate: Khan Younis<br>Children: 144<br>Vaccinations: 365');
+    L.circleMarker([31.3637325, 34.3000466], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>AWDA Health Center - Asdaa</b><br>Governorate: Khan Younis<br>Children: 69<br>Vaccinations: 203');
+    L.circleMarker([31.3658118, 34.2815927], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>AWDA Medical Point -Al-Aqsa University Area</b><br>Governorate: Khan Younis<br>Children: 44<br>Vaccinations: 142');
+    L.circleMarker([31.41991482, 34.35987552], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al Aqsa Hospital</b><br>Governorate: Middle zone<br>Children: 44<br>Vaccinations: 141');
+    L.circleMarker([31.44841093, 34.38941694], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al Awda Hospital - Nuseirat</b><br>Governorate: Middle zone<br>Children: 24<br>Vaccinations: 64');
+    L.circleMarker([31.521389, 34.476944], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al Awda Medical Center</b><br>Governorate: North Gaza<br>Children: 68<br>Vaccinations: 205');
+    L.circleMarker([31.5073, 34.46557], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al Daraj MP.-Daraj Elem. Co-ed "A,B,D,E"</b><br>Governorate: Gaza<br>Children: 88<br>Vaccinations: 284');
+    L.circleMarker([31.543333, 34.478056], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al Forsan Medical Center</b><br>Governorate: North Gaza<br>Children: 81<br>Vaccinations: 213');
+    L.circleMarker([31.523056, 34.438056], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al Moustafa PHC</b><br>Governorate: Gaza<br>Children: 90<br>Vaccinations: 261');
+    L.circleMarker([31.50593493, 34.43041685], {radius: 6, fillColor: '#e74c3c', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al QUDS Hospital - PRCS</b><br>Governorate: Gaza<br>Children: 181<br>Vaccinations: 514');
+    L.circleMarker([31.51616, 34.46041], {radius: 6, fillColor: '#e74c3c', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al Sahaba MP- PRCS</b><br>Governorate: Gaza<br>Children: 256<br>Vaccinations: 738');
+    L.circleMarker([31.5087703, 34.4471449], {radius: 8, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al Salam H C</b><br>Governorate: Gaza<br>Children: 342<br>Vaccinations: 1,050');
+    L.circleMarker([31.4437576, 34.37512137], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al Sawarha Medical Point</b><br>Governorate: Middle zone<br>Children: 21<br>Vaccinations: 56');
+    L.circleMarker([31.5328893, 34.4700466], {radius: 13, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al Shaeikh Radwan PHC</b><br>Governorate: Gaza<br>Children: 538<br>Vaccinations: 1,429');
+    L.circleMarker([31.422241, 34.348997], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al musadar Center</b><br>Governorate: Middle zone<br>Children: 12<br>Vaccinations: 28');
+    L.circleMarker([31.43951, 34.38064], {radius: 6, fillColor: '#e74c3c', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al zawidah Medical Point - PRCS</b><br>Governorate: Middle zone<br>Children: 7<br>Vaccinations: 20');
+    L.circleMarker([31.352056, 34.298306], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Amal Hospital</b><br>Governorate: Khan Younis<br>Children: 161<br>Vaccinations: 479');
+    L.circleMarker([31.417347, 34.329593], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Athar</b><br>Governorate: Middle zone<br>Children: 17<br>Vaccinations: 44');
+    L.circleMarker([31.401134, 34.328443], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Awda Deir al-Balah</b><br>Governorate: Middle zone<br>Children: 59<br>Vaccinations: 121');
+    L.circleMarker([31.408829, 34.320301], {radius: 6, fillColor: '#2c3e50', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Bahr Primary Health Care Center /MdM F</b><br>Governorate: Middle zone<br>Children: 56<br>Vaccinations: 164');
+    L.circleMarker([31.40677, 34.332979], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Baraka Medical Center</b><br>Governorate: Middle zone<br>Children: 43<br>Vaccinations: 117');
+    L.circleMarker([31.5127219, 34.4592005], {radius: 18, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Daraj Martyrs Center</b><br>Governorate: Gaza<br>Children: 1,262<br>Vaccinations: 3,853');
+    L.circleMarker([31.509444, 34.428889], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Falah Health Center</b><br>Governorate: Gaza<br>Children: 42<br>Vaccinations: 103');
+    L.circleMarker([31.40674124, 34.34246341], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Hakr El jamea</b><br>Governorate: Middle zone<br>Children: 100<br>Vaccinations: 282');
+    L.circleMarker([31.45076453, 34.37624367], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Hasaina Medical Point</b><br>Governorate: Middle zone<br>Children: 62<br>Vaccinations: 112');
+    L.circleMarker([31.510556, 34.473611], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Jazairi Health Center</b><br>Governorate: Gaza<br>Children: 74<br>Vaccinations: 230');
+    L.circleMarker([31.513611, 34.450556], {radius: 6, fillColor: '#e74c3c', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Kuwaiti Hospital - Palestinian Red Crescent Society</b><br>Governorate: Gaza<br>Children: 61<br>Vaccinations: 171');
+    L.circleMarker([31.42305, 34.38171], {radius: 6, fillColor: '#e74c3c', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Maghazi Clinic - PRCS</b><br>Governorate: Middle zone<br>Children: 42<br>Vaccinations: 123');
+    L.circleMarker([31.535556, 34.470556], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Mustafa Medical Point</b><br>Governorate: North Gaza<br>Children: 18<br>Vaccinations: 39');
+    L.circleMarker([31.348744, 34.263731], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Quds Center is private</b><br>Governorate: Khan Younis<br>Children: 17<br>Vaccinations: 42');
+    L.circleMarker([31.50897, 34.44997], {radius: 6, fillColor: '#e74c3c', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Sabra Medical Point - Palestinian Red Crescent Society</b><br>Governorate: Gaza<br>Children: 38<br>Vaccinations: 115');
+    L.circleMarker([31.44061, 34.3653], {radius: 6, fillColor: '#e74c3c', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Sawarah Clinic - PRCS</b><br>Governorate: Middle zone<br>Children: 17<br>Vaccinations: 45');
+    L.circleMarker([31.4385752, 34.3670997], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Sawarha (Al-Khawaldeh) Center</b><br>Governorate: Middle zone<br>Children: 42<br>Vaccinations: 108');
+    L.circleMarker([31.346778, 34.292639], {radius: 7, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Tahrir Building</b><br>Governorate: Khan Younis<br>Children: 296<br>Vaccinations: 713');
+    L.circleMarker([31.41862, 34.340928], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Tawbah MP</b><br>Governorate: Middle zone<br>Children: 11<br>Vaccinations: 28');
+    L.circleMarker([31.4290369, 34.3683701], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Zawaydeh Center</b><br>Governorate: Middle zone<br>Children: 179<br>Vaccinations: 525');
+    L.circleMarker([31.49924, 34.45904], {radius: 6, fillColor: '#e74c3c', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Al-Zaytoun Clinic - Palestinian Red Crescent Society</b><br>Governorate: Gaza<br>Children: 81<br>Vaccinations: 205');
+    L.circleMarker([31.53776, 34.47876], {radius: 6, fillColor: '#3498db', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Alasaftawi H C - UNRWA</b><br>Governorate: North Gaza<br>Children: 173<br>Vaccinations: 564');
+    L.circleMarker([31.3517295, 34.2949977], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Almajada MP</b><br>Governorate: Khan Younis<br>Children: 61<br>Vaccinations: 181');
+    L.circleMarker([31.42930455, 34.34560876], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Alquds PHC</b><br>Governorate: Middle zone<br>Children: 32<br>Vaccinations: 88');
+    L.circleMarker([31.523056, 34.438056], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Arkan Health Center</b><br>Governorate: Gaza<br>Children: 129<br>Vaccinations: 388');
+    L.circleMarker([31.3644465, 34.30006], {radius: 7, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Asdaa Medical Point</b><br>Governorate: Khan Younis<br>Children: 318<br>Vaccinations: 927');
+    L.circleMarker([31.528658, 34.44843], {radius: 16, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Asma Medical Point-Asma Prep Girls A, B</b><br>Governorate: Gaza<br>Children: 649<br>Vaccinations: 1,821');
+    L.circleMarker([31.343415, 34.2604517], {radius: 6, fillColor: '#3498db', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Bir 19 MP - UNRWA</b><br>Governorate: Khan Younis<br>Children: 58<br>Vaccinations: 160');
+    L.circleMarker([31.523056, 34.438056], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Blood Bank Clinic</b><br>Governorate: Gaza<br>Children: 189<br>Vaccinations: 550');
+    L.circleMarker([31.4393312, 34.4003753], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Bureij Center Al-Jaded - Shuhada Albureij</b><br>Governorate: Middle zone<br>Children: 221<br>Vaccinations: 453');
+    L.circleMarker([31.4388341, 34.4056066], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Burij Health Center</b><br>Governorate: Middle zone<br>Children: 58<br>Vaccinations: 149');
+    L.circleMarker([31.4428774, 34.4006053], {radius: 6, fillColor: '#e74c3c', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Burij PRCS</b><br>Governorate: Middle zone<br>Children: 17<br>Vaccinations: 49');
+    L.circleMarker([31.41370518, 34.3457344], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>CARE PHCC -Deir Al-Balah</b><br>Governorate: Middle zone<br>Children: 35<br>Vaccinations: 62');
+    L.circleMarker([31.351722, 34.254222], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>CFTA Mawasi Medical Point</b><br>Governorate: Rafah<br>Children: 22<br>Vaccinations: 87');
+    L.circleMarker([31.444497, 34.383615], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>CRS</b><br>Governorate: Middle zone<br>Children: 20<br>Vaccinations: 47');
+    L.circleMarker([31.42408591, 34.33875402], {radius: 15, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Deir El Balah Health Center</b><br>Governorate: Middle zone<br>Children: 632<br>Vaccinations: 1,661');
+    L.circleMarker([31.45333246, 34.39523112], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>El Mofte Medical Point</b><br>Governorate: Middle zone<br>Children: 35<br>Vaccinations: 77');
+    L.circleMarker([31.35761, 34.261119], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>El-Najar MP</b><br>Governorate: Khan Younis<br>Children: 19<br>Vaccinations: 61');
+    L.circleMarker([31.341444, 34.250222], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Emargancy Rafah</b><br>Governorate: Rafah<br>Children: 22<br>Vaccinations: 53');
+    L.circleMarker([31.394194, 34.307611], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Emergency NGO - PHC Clinic Al Qarara - Khan Yunis</b><br>Governorate: Khan Younis<br>Children: 92<br>Vaccinations: 284');
+    L.circleMarker([31.4227124, 34.34324174], {radius: 13, fillColor: '#e74c3c', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Fathi Arafat PHC - PRCS</b><br>Governorate: Middle zone<br>Children: 532<br>Vaccinations: 1,172');
+    L.circleMarker([31.3522494, 34.2689665], {radius: 10, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Giving Without Borders Medical Clinic</b><br>Governorate: Khan Younis<br>Children: 419<br>Vaccinations: 1,158');
+    L.circleMarker([31.541111, 34.494167], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Haid Abdel Shafi Medical Center</b><br>Governorate: North Gaza<br>Children: 115<br>Vaccinations: 330');
+    L.circleMarker([31.394863, 34.306698], {radius: 7, fillColor: '#3498db', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Hamad HC - UNRWA</b><br>Governorate: Khan Younis<br>Children: 305<br>Vaccinations: 855');
+    L.circleMarker([31.523056, 34.438056], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Heroic Hearts Al-Yasmin Primary Care</b><br>Governorate: Gaza<br>Children: 23<br>Vaccinations: 61');
+    L.circleMarker([31.425571, 34.354263], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Hidar Abed El shafi MP</b><br>Governorate: Middle zone<br>Children: 41<br>Vaccinations: 112');
+    L.circleMarker([31.40507307, 34.34037143], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Hiker Al Jamea Medical Point</b><br>Governorate: Middle zone<br>Children: 35<br>Vaccinations: 106');
+    L.circleMarker([31.392643, 34.302078], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Hunin MP</b><br>Governorate: Khan Younis<br>Children: 203<br>Vaccinations: 550');
+    L.circleMarker([31.3817736, 34.2920634], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Husam</b><br>Governorate: Khan Younis<br>Children: 69<br>Vaccinations: 168');
+    L.circleMarker([31.342222, 34.24275], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>ICRC Fiel Hospital</b><br>Governorate: Rafah<br>Children: 150<br>Vaccinations: 399');
+    L.circleMarker([31.443733, 34.357917], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>IMC Field Hospital - Al-Zawaida</b><br>Governorate: Middle zone<br>Children: 98<br>Vaccinations: 311');
+    L.circleMarker([31.432989, 34.346268], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>IMC field hospital - Middle Area</b><br>Governorate: Middle zone<br>Children: 70<br>Vaccinations: 197');
+    L.circleMarker([31.544444, 34.500556], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Insan Medical Center</b><br>Governorate: North Gaza<br>Children: 21<br>Vaccinations: 60');
+    L.circleMarker([31.5275, 34.484444], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Jabalia Medical Clinic</b><br>Governorate: North Gaza<br>Children: 142<br>Vaccinations: 358');
+    L.circleMarker([31.3620985, 34.2949142], {radius: 17, fillColor: '#3498db', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Japanese HC - UNRWA</b><br>Governorate: Khan Younis<br>Children: 704<br>Vaccinations: 1,704');
+    L.circleMarker([31.531111, 34.476944], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Juzoor Halima Al-Saadia</b><br>Governorate: North Gaza<br>Children: 143<br>Vaccinations: 467');
+    L.circleMarker([31.551389, 34.483611], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Juzoor of Al-Atatreh</b><br>Governorate: North Gaza<br>Children: 15<br>Vaccinations: 58');
+    L.circleMarker([31.536944, 34.496111], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Juzoor of Anwar Aziz</b><br>Governorate: North Gaza<br>Children: 28<br>Vaccinations: 127');
+    L.circleMarker([31.3465, 34.310944], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Khanyounis Martyrs Primary Healthcare Center</b><br>Governorate: Khan Younis<br>Children: 42<br>Vaccinations: 129');
+    L.circleMarker([31.346694, 34.295278], {radius: 6, fillColor: '#2c3e50', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Khanyounis Primary Healthcare Center/MdMF</b><br>Governorate: Khan Younis<br>Children: 237<br>Vaccinations: 563');
+    L.circleMarker([31.539167, 34.453056], {radius: 6, fillColor: '#2c3e50', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>MDM Clinic - France - North Beach</b><br>Governorate: Gaza<br>Children: 115<br>Vaccinations: 314');
+    L.circleMarker([31.523056, 34.441111], {radius: 6, fillColor: '#9b59b6', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>MSF Belgium Clinic - next to Al-Shifa Hospital</b><br>Governorate: Gaza<br>Children: 153<br>Vaccinations: 472');
+    L.circleMarker([31.543056, 34.469722], {radius: 6, fillColor: '#9b59b6', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>MSF Belgium Medical point</b><br>Governorate: North Gaza<br>Children: 35<br>Vaccinations: 99');
+    L.circleMarker([31.496944, 34.443056], {radius: 6, fillColor: '#f39c12', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>MSF Clinic Spain-Al-Zaytoun</b><br>Governorate: Gaza<br>Children: 43<br>Vaccinations: 125');
+    L.circleMarker([31.4245531, 34.3882104], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Maghazi Center</b><br>Governorate: Middle zone<br>Children: 82<br>Vaccinations: 205');
+    L.circleMarker([31.4212555, 34.38518029], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Maghazi Medical Point</b><br>Governorate: Middle zone<br>Children: 195<br>Vaccinations: 530');
+    L.circleMarker([31.5066731, 34.45130953], {radius: 14, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Masqat Al Sabra PHC</b><br>Governorate: Gaza<br>Children: 585<br>Vaccinations: 1,735');
+    L.circleMarker([31.361199, 34.270385], {radius: 11, fillColor: '#3498db', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Mawasi HC - UNRWA</b><br>Governorate: Khan Younis<br>Children: 453<br>Vaccinations: 1,152');
+    L.circleMarker([31.344222, 34.246861], {radius: 6, fillColor: '#f39c12', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Mawasi MSF-Spain-Fish Fresh</b><br>Governorate: Rafah<br>Children: 138<br>Vaccinations: 410');
+    L.circleMarker([31.358556, 34.263361], {radius: 6, fillColor: '#2c3e50', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Mawasi-Khan Younis Primary Health Care Center/ MdM-F</b><br>Governorate: Khan Younis<br>Children: 23<br>Vaccinations: 74');
+    L.circleMarker([31.523056, 34.438056], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Medical Point for the Holy Family School</b><br>Governorate: Gaza<br>Children: 65<br>Vaccinations: 189');
+    L.circleMarker([31.41268, 34.351129], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Medical Relief Association</b><br>Governorate: Middle zone<br>Children: 21<br>Vaccinations: 54');
+    L.circleMarker([31.338187, 34.241429], {radius: 6, fillColor: '#3498db', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Muawia HC - UNRWA</b><br>Governorate: Rafah<br>Children: 46<br>Vaccinations: 113');
+    L.circleMarker([31.44843759, 34.38955372], {radius: 18, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Nusairat Health Center</b><br>Governorate: Middle zone<br>Children: 826<br>Vaccinations: 2,315');
+    L.circleMarker([31.44941, 34.39155], {radius: 6, fillColor: '#e74c3c', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Nuseirat Clinic - PRCS</b><br>Governorate: Middle zone<br>Children: 16<br>Vaccinations: 41');
+    L.circleMarker([31.4396829, 34.3859752], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Nuseirat Martyrs Center</b><br>Governorate: Middle zone<br>Children: 103<br>Vaccinations: 287');
+    L.circleMarker([31.3945, 34.312583], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>PAL MED  Shalet</b><br>Governorate: Khan Younis<br>Children: 62<br>Vaccinations: 208');
+    L.circleMarker([31.385778, 34.293417], {radius: 6, fillColor: '#9b59b6', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>PHC- MSF Belgium Mawasi Khan Younis</b><br>Governorate: Khan Younis<br>Children: 210<br>Vaccinations: 572');
+    L.circleMarker([31.3682852, 34.2740413], {radius: 6, fillColor: '#e74c3c', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>PRCS Mawasi</b><br>Governorate: Khan Younis<br>Children: 182<br>Vaccinations: 503');
+    L.circleMarker([31.44606252, 34.39455043], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Palestinian Medical Center</b><br>Governorate: Middle zone<br>Children: 10<br>Vaccinations: 30');
+    L.circleMarker([31.380468, 34.33316], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>QARRARA MP</b><br>Governorate: Khan Younis<br>Children: 22<br>Vaccinations: 46');
+    L.circleMarker([31.540556, 34.466389], {radius: 6, fillColor: '#e74c3c', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Red Crescent Medical Point -Alamin Aleamu</b><br>Governorate: North Gaza<br>Children: 69<br>Vaccinations: 196');
+    L.circleMarker([31.51551951, 34.44350555], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Rimal MP-Rimal Elem. Co-ed "A" & "B"</b><br>Governorate: Gaza<br>Children: 109<br>Vaccinations: 330');
+    L.circleMarker([31.52117148, 34.45579367], {radius: 7, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Salah Eddin MP -Salah Eddin Prep Boys A, B</b><br>Governorate: Gaza<br>Children: 296<br>Vaccinations: 899');
+    L.circleMarker([31.500278, 34.4175], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Sheikh Ajlin Point, Shamlakh Mosque</b><br>Governorate: Gaza<br>Children: 54<br>Vaccinations: 144');
+    L.circleMarker([31.40424978, 34.31935736], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Solidarity Polyclinic (MAP)</b><br>Governorate: Middle zone<br>Children: 118<br>Vaccinations: 358');
+    L.circleMarker([31.546389, 34.495], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Tal Al Rabie School (MSF) point</b><br>Governorate: North Gaza<br>Children: 55<br>Vaccinations: 147');
+    L.circleMarker([31.43646, 34.35433], {radius: 6, fillColor: '#1abc9c', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>UK MED FIXED PHC</b><br>Governorate: Middle zone<br>Children: 76<br>Vaccinations: 180');
+    L.circleMarker([31.346194, 34.248667], {radius: 6, fillColor: '#1abc9c', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>UK Med Field Hospital</b><br>Governorate: Rafah<br>Children: 109<br>Vaccinations: 289');
+    L.circleMarker([31.46023466, 34.38969277], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>West Nusairat Health Center</b><br>Governorate: Middle zone<br>Children: 102<br>Vaccinations: 288');
+    L.circleMarker([31.41821476, 34.34515173], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Yafa Hospital</b><br>Governorate: Middle zone<br>Children: 6<br>Vaccinations: 23');
+    L.circleMarker([31.352339, 34.2562], {radius: 6, fillColor: '#3498db', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>Zourub HC - UNRWA</b><br>Governorate: Khan Younis<br>Children: 172<br>Vaccinations: 427');
+    L.circleMarker([31.344611, 34.269278], {radius: 6, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>heroic haert bier 19</b><br>Governorate: Rafah<br>Children: 49<br>Vaccinations: 155');
+    L.circleMarker([31.4168184, 34.3492496], {radius: 8, fillColor: '#27ae60', color: '#fff', weight: 2, fillOpacity: 0.8}).addTo(map).bindPopup('<b>shuhadaa Deir al-Balah Clinic</b><br>Governorate: Middle zone<br>Children: 324<br>Vaccinations: 907');
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Debug Check</title>
+    <style>
+        body { font-family: Arial; padding: 20px; direction: rtl; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .info { color: blue; }
+        pre { background: #f4f4f4; padding: 10px; border-radius: 5px; direction: ltr; }
+    </style>
+</head>
+<body>
+    <h1>فحص سريع للخريطة والفلاتر</h1>
+    <div id="results"></div>
+
+    <script src="data/location_point_unified_corrected_1.js"></script>
+    <script>
+        let output = '<h2>نتائج الفحص:</h2>';
+
+        // Check 1: Data loaded
+        if (typeof json_location_point_unified_corrected_1 !== 'undefined') {
+            output += '<p class="success">✓ تم تحميل البيانات بنجاح</p>';
+            output += `<p class="info">عدد النقاط: ${json_location_point_unified_corrected_1.features.length}</p>`;
+        } else {
+            output += '<p class="error">✗ فشل تحميل البيانات</p>';
+        }
+
+        // Check 2: Sample data
+        if (json_location_point_unified_corrected_1.features.length > 0) {
+            const sample = json_location_point_unified_corrected_1.features[0];
+            output += '<h3>عينة من البيانات (النقطة الأولى):</h3>';
+            output += '<pre>' + JSON.stringify(sample.properties, null, 2) + '</pre>';
+
+            // Check required fields
+            const requiredFields = [
+                'Governorate',
+                'Health Facility',
+                'Suppervisor Name',
+                'Vaccination status of a Child | On Schedule',
+                'all_child'
+            ];
+
+            output += '<h3>الحقول المطلوبة:</h3><ul>';
+            requiredFields.forEach(field => {
+                if (field in sample.properties) {
+                    output += `<li class="success">✓ ${field}</li>`;
+                } else {
+                    output += `<li class="error">✗ ${field} - غير موجود!</li>`;
+                }
+            });
+            output += '</ul>';
+
+            // Check governorates
+            const govs = new Set();
+            json_location_point_unified_corrected_1.features.forEach(f => {
+                if (f.properties.Governorate) govs.add(f.properties.Governorate);
+            });
+            output += '<h3>المحافظات الموجودة:</h3><ul>';
+            Array.from(govs).sort().forEach(gov => {
+                output += `<li>${gov}</li>`;
+            });
+            output += '</ul>';
+        }
+
+        document.getElementById('results').innerHTML = output;
+    </script>
+</body>
+</html>

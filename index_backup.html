@@ -1,0 +1,1022 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/L.Control.Locate.min.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet-search.css">
+        <link rel="stylesheet" href="css/filter.css">
+<link rel="stylesheet" href="css/nouislider.min.css">
+        <link rel="stylesheet" href="css/leaflet.photon.css">
+        <link rel="stylesheet" href="css/leaflet-measure.css">
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        </style>
+        <title></title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/L.Control.Locate.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet.photon.js"></script>
+        <script src="js/leaflet-measure.js"></script>
+        <script src="js/leaflet-search.js"></script>
+        <script src="js/tailDT.js"></script>
+<script src="js/nouislider.min.js"></script>
+<script src="js/wNumb.js"></script>
+        <script src="data/location_point_unified_corrected_1.js"></script>
+        <script>
+        var highlightLayer;
+        function highlightFeature(e) {
+            highlightLayer = e.target;
+
+            if (e.target.feature.geometry.type === 'LineString' || e.target.feature.geometry.type === 'MultiLineString') {
+              highlightLayer.setStyle({
+                color: 'rgba(255, 255, 0, 1.00)',
+              });
+            } else {
+              highlightLayer.setStyle({
+                fillColor: 'rgba(255, 255, 0, 1.00)',
+                fillOpacity: 1
+              });
+            }
+            highlightLayer.openPopup();
+        }
+        var map = L.map('map', {
+            zoomControl:false, maxZoom:28, minZoom:1
+        }).fitBounds([[31.20507802512429,34.119629865067616],[31.541582704655145,34.51231792690869]]);
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        // remove popup's row if "visible-with-data"
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        // modify popup if contains media
+        function addClassToPopupIfMedia(content, popup) {
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            var imgTd = tempDiv.querySelector('td img');
+            if (imgTd) {
+                var src = imgTd.getAttribute('src');
+                if (/\.(jpg|jpeg|png|gif|bmp|webp|avif)$/i.test(src)) {
+                    popup._contentNode.classList.add('media');
+                    setTimeout(function() {
+                        popup.update();
+                    }, 10);
+                } else if (/\.(mp3|wav|ogg|aac)$/i.test(src)) {
+                    var audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.src = src;
+                    imgTd.parentNode.replaceChild(audio, imgTd);
+                    popup._contentNode.classList.add('media');
+                    setTimeout(function() {
+                        popup.setContent(tempDiv.innerHTML);
+                        popup.update();
+                    }, 10);
+                } else if (/\.(mp4|webm|ogg|mov)$/i.test(src)) {
+                    var video = document.createElement('video');
+                    video.controls = true;
+                    video.src = src;
+                    video.style.width = "400px";
+                    video.style.height = "300px";
+                    video.style.maxHeight = "60vh";
+                    video.style.maxWidth = "60vw";
+                    imgTd.parentNode.replaceChild(video, imgTd);
+                    popup._contentNode.classList.add('media');
+                    // Aggiorna il popup quando il video carica i metadati
+                    video.addEventListener('loadedmetadata', function() {
+                        popup.update();
+                    });
+                    setTimeout(function() {
+                        popup.setContent(tempDiv.innerHTML);
+                        popup.update();
+                    }, 10);
+                } else {
+                    popup._contentNode.classList.remove('media');
+                }
+            } else {
+                popup._contentNode.classList.remove('media');
+            }
+        }
+        var zoomControl = L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
+        L.control.locate({locateOptions: {maxZoom: 19}}).addTo(map);
+        var measureControl = new L.Control.Measure({
+            position: 'topleft',
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares'
+        });
+        measureControl.addTo(map);
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].innerHTML = '';
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].className += ' fas fa-ruler';
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+        }
+        map.createPane('pane_OpenStreetMap_0');
+        map.getPane('pane_OpenStreetMap_0').style.zIndex = 400;
+        var layer_OpenStreetMap_0 = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            pane: 'pane_OpenStreetMap_0',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 19
+        });
+        layer_OpenStreetMap_0;
+        map.addLayer(layer_OpenStreetMap_0);
+        function pop_vaccination_data(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>اسم المنشأة</strong><br />' + (feature.properties['Medical Point - Health Facility Name in Arabic'] !== null ? autolinker.link(String(feature.properties['Medical Point - Health Facility Name in Arabic']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2"><strong>Facility Name</strong><br />' + (feature.properties['Medical Point - Health Facility Name in English'] !== null ? autolinker.link(String(feature.properties['Medical Point - Health Facility Name in English']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2"><strong>المنظمة / Organization</strong><br />' + (feature.properties['Teams Organization'] !== null ? autolinker.link(String(feature.properties['Teams Organization']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2"><strong>إجمالي الأطفال / Total Children</strong><br />' + (feature.properties['Aggregated_all_child'] !== null ? autolinker.link(String(feature.properties['Aggregated_all_child']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2"><strong>التطعيم بالموعد / On Schedule</strong><br />' + (feature.properties['Aggregated_Vaccination status of a Child | On Schedule'] !== null ? autolinker.link(String(feature.properties['Aggregated_Vaccination status of a Child | On Schedule']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2"><strong>أطفال 0-12 شهر / Age 0-12</strong><br />' + (feature.properties['Aggregated_Total Children Vaccinated by Age | 0 to 12'] !== null ? autolinker.link(String(feature.properties['Aggregated_Total Children Vaccinated by Age | 0 to 12']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2"><strong>أطفال فوق 24 شهر / Age 24+</strong><br />' + (feature.properties['Aggregated_Total Children Vaccinated by Age | above 24'] !== null ? autolinker.link(String(feature.properties['Aggregated_Total Children Vaccinated by Age | above 24']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_vaccination_data_0(feature) {
+            switch(String(feature.properties['Teams Organization'])) {
+                case 'MoH':
+                    return {
+                pane: 'pane_vaccination_data',
+                radius: 8.0,
+                opacity: 1,
+                color: 'rgba(128,17,25,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(219,30,42,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'MOH':
+                    return {
+                pane: 'pane_vaccination_data',
+                radius: 8.0,
+                opacity: 1,
+                color: 'rgba(128,17,25,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(219,30,42,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'MSF':
+                    return {
+                pane: 'pane_vaccination_data',
+                radius: 8.0,
+                opacity: 1,
+                color: 'rgba(61,128,53,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(43,40,212,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'PCRS':
+                    return {
+                pane: 'pane_vaccination_data',
+                radius: 8.0,
+                opacity: 1,
+                color: 'rgba(61,128,53,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(53,229,103,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'PRCS':
+                    return {
+                pane: 'pane_vaccination_data',
+                radius: 8.0,
+                opacity: 1,
+                color: 'rgba(61,128,53,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(205,132,31,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'UNRWA':
+                    return {
+                pane: 'pane_vaccination_data',
+                radius: 8.0,
+                opacity: 1,
+                color: 'rgba(61,128,53,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(21,205,233,1.0)',
+                interactive: true,
+            }
+                    break;
+                default:
+                    return {
+                pane: 'pane_vaccination_data',
+                radius: 8.0,
+                opacity: 1,
+                color: 'rgba(61,128,53,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(212,111,140,1.0)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_vaccination_data');
+        map.getPane('pane_vaccination_data').style.zIndex = 401;
+        map.getPane('pane_vaccination_data').style['mix-blend-mode'] = 'normal';
+        var layer_vaccination_data = new L.geoJson(json_vaccination_data, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_vaccination_data',
+            layerName: 'layer_vaccination_data',
+            pane: 'pane_vaccination_data',
+            onEachFeature: pop_vaccination_data,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_vaccination_data_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_vaccination_data);
+        map.addLayer(layer_vaccination_data);
+        const url = {"Nominatim OSM": "https://nominatim.openstreetmap.org/search?format=geojson&addressdetails=1&",
+        "France BAN": "https://api-adresse.data.gouv.fr/search/?"}
+        var photonControl = L.control.photon({
+            url: url["Nominatim OSM"],
+            feedbackLabel: '',
+            position: 'topleft',
+            includePosition: true,
+            initial: true,
+            // resultsHandler: myHandler,
+        }).addTo(map);
+        photonControl._container.childNodes[0].style.borderRadius="10px"
+        // Create a variable to store the geoJSON data
+        var x = null;
+        // Create a variable to store the marker
+        var marker = null;
+        // Add an event listener to the Photon control to create a marker from the returned geoJSON data
+        var z = null;
+        photonControl.on('selected', function(e) {
+            console.log(photonControl.search.resultsContainer);
+            if (x != null) {
+                map.removeLayer(obj3.marker);
+                map.removeLayer(x);
+            }
+            obj2.gcd = e.choice;
+            x = L.geoJSON(obj2.gcd).addTo(map);
+            var label = typeof obj2.gcd.properties.label === 'undefined' ? obj2.gcd.properties.display_name : obj2.gcd.properties.label;
+            obj3.marker = L.marker(x.getLayers()[0].getLatLng()).bindPopup(label).addTo(map);
+            map.setView(x.getLayers()[0].getLatLng(), 17);
+            z = typeof e.choice.properties.label === 'undefined'? e.choice.properties.display_name : e.choice.properties.label;
+            console.log(e);
+            e.target.input.value = z;
+        });
+        var search = document.getElementsByClassName("leaflet-photon leaflet-control")[0];
+        search.classList.add("leaflet-control-search")
+        search.style.display = "flex";
+        search.style.backgroundColor="rgba(255,255,255,0.5)" 
+
+        // Create the new button element
+        var button = document.createElement("div");
+        button.id = "gcd-button-control";
+        button.className = "gcd-gl-btn fa fa-search search-button";
+
+        // Insert the button at the beginning of the search control
+        search.insertBefore(button, search.firstChild);
+        last = search.lastChild;
+        last.style.display = "none";
+        button.addEventListener("click", function (e) {
+            if (last.style.display === "none") {
+                last.style.display = "block";
+            } else {
+                last.style.display = "none";
+            }
+        });
+        setBounds();
+        map.addControl(new L.Control.Search({
+            layer: layer_vaccination_data,
+            initial: false,
+            hideMarkerOnCollapse: true,
+            propertyName: 'Medical Point - Health Facility Name in English'}));
+        if (typeof url === 'undefined') {
+            document.getElementsByClassName('search-button')[0].className += ' fa fa-binoculars';
+        } else {
+            document.getElementsByClassName('search-button')[1].className += ' fa fa-binoculars';
+        }
+        var mapDiv = document.getElementById('map');
+        var row = document.createElement('div');
+        row.className="row";
+        row.id="all";
+        row.style.height = "100%";
+        var col1 = document.createElement('div');
+        col1.className="col9";
+        col1.id = "mapWindow";
+        col1.style.height = "99%";
+        col1.style.width = "80%";
+        col1.style.display = "inline-block";
+        var col2 = document.createElement('div');
+        col2.className="col3";
+        col2.id = "menu";
+        col2.style.display = "inline-block";
+        mapDiv.parentNode.insertBefore(row, mapDiv);
+        document.getElementById("all").appendChild(col1);
+        document.getElementById("all").appendChild(col2);
+        col1.appendChild(mapDiv)
+        var Filters = {"Vaccination status of a Child | On Schedule": "int", "Vaccination status of a Child | Defaulter": "int", "Vaccination status of a Child | Zero Dose": "int", "Total Children Vaccinated by Age | above 24": "int", "Total Children Vaccinated by Age | 0 to 12": "int", "Total Children Vaccinated by Age | 12 to 24": "int", "Governorate": "str", "Health Facility": "str", "Suppervisor Name": "str", "all_child": "int"};
+        function filterFunc() {
+          map.eachLayer(function(lyr){
+          if ("options" in lyr && "dataVar" in lyr["options"]){
+            features = this[lyr["options"]["dataVar"]].features.slice(0);
+            try{
+              for (key in Filters){
+                keyS = key.replace(/[^a-zA-Z0-9_]/g, "")
+                if (Filters[key] == "str" || Filters[key] == "bool"){
+                  var selection = [];
+                  var options = document.getElementById("sel_" + keyS).options
+                  for (var i=0; i < options.length; i++) {
+                    if (options[i].selected) selection.push(options[i].value);
+                  }
+                    try{
+                      if (key in features[0].properties){
+                        for (i = features.length - 1;
+                          i >= 0; --i){
+                          if (selection.indexOf(
+                          features[i].properties[key])<0
+                          && selection.length>0) {
+                          features.splice(i,1);
+                          }
+                        }
+                      }
+                    } catch(err){
+                  }
+                }
+                if (Filters[key] == "int"){
+                  sliderVals =  document.getElementById(
+                    "div_" + keyS).noUiSlider.get();
+                  try{
+                    if (key in features[0].properties){
+                    for (i = features.length - 1; i >= 0; --i){
+                      if (parseInt(features[i].properties[key])
+                          < sliderVals[0]
+                          || parseInt(features[i].properties[key])
+                          > sliderVals[1]){
+                            features.splice(i,1);
+                          }
+                        }
+                      }
+                    } catch(err){
+                    }
+                  }
+                if (Filters[key] == "real"){
+                  sliderVals =  document.getElementById(
+                    "div_" + keyS).noUiSlider.get();
+                  try{
+                    if (key in features[0].properties){
+                    for (i = features.length - 1; i >= 0; --i){
+                      if (features[i].properties[key]
+                          < sliderVals[0]
+                          || features[i].properties[key]
+                          > sliderVals[1]){
+                            features.splice(i,1);
+                          }
+                        }
+                      }
+                    } catch(err){
+                    }
+                  }
+                if (Filters[key] == "date"
+                  || Filters[key] == "datetime"
+                  || Filters[key] == "time"){
+                  try{
+                    if (key in features[0].properties){
+                      HTMLkey = key.replace(/[&\/\\#,+()$~%.'":*?<>{} ]/g, '');
+                      startdate = document.getElementById("dat_" +
+                        HTMLkey + "_date1").value.replace(" ", "T");
+                      enddate = document.getElementById("dat_" +
+                        HTMLkey + "_date2").value.replace(" ", "T");
+                      for (i = features.length - 1; i >= 0; --i){
+                        if (features[i].properties[key] < startdate
+                          || features[i].properties[key] > enddate){
+                          features.splice(i,1);
+                        }
+                      }
+                    }
+                  } catch(err){
+                  }
+                }
+              }
+            } catch(err){
+            }
+          this[lyr["options"]["layerName"]].clearLayers();
+          this[lyr["options"]["layerName"]].addData(features);
+          }
+          })
+        }
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_Aggregated_all_child = document.createElement("div");
+            div_Aggregated_all_child.id = "div_Aggregated_all_child";
+            div_Aggregated_all_child.className = "slider";
+            document.getElementById("menu").appendChild(div_Aggregated_all_child);
+            var lab_Aggregated_all_child = document.createElement('div');
+            lab_Aggregated_all_child.innerHTML  = 'Aggregated_all_child: <span id="val_Aggregated_all_child"></span>';
+            lab_Aggregated_all_child.className = 'filterlabel';
+            document.getElementById("menu").appendChild(lab_Aggregated_all_child);
+            var reset_Aggregated_all_child = document.createElement('div');
+            reset_Aggregated_all_child.innerHTML = 'clear filter';
+            reset_Aggregated_all_child.className = 'filterlabel';
+            lab_Aggregated_all_child.className = 'filterlabel';
+            reset_Aggregated_all_child.onclick = function() {
+                sel_Aggregated_all_child.noUiSlider.reset();
+            };
+            document.getElementById("menu").appendChild(reset_Aggregated_all_child);
+            var sel_Aggregated_all_child = document.getElementById('div_Aggregated_all_child');
+            noUiSlider.create(sel_Aggregated_all_child, {
+                connect: true,
+                start: [2, 529],
+                step: 1,
+                format: wNumb({
+                    decimals: 0,
+                    }),
+                range: {
+                min: 2,
+                max: 529
+                }
+            });
+            sel_Aggregated_all_child.noUiSlider.on('update', function (values) {
+            filterVals =[];
+            for (value in values){
+            filterVals.push(parseInt(value))
+            }
+            val_Aggregated_all_child = document.getElementById('val_Aggregated_all_child');
+            val_Aggregated_all_child.innerHTML = values.join(' - ');
+                filterFunc()
+            });
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_Aggregated_VaccinationstatusofaChildOnSchedule = document.createElement("div");
+            div_Aggregated_VaccinationstatusofaChildOnSchedule.id = "div_Aggregated_VaccinationstatusofaChildOnSchedule";
+            div_Aggregated_VaccinationstatusofaChildOnSchedule.className = "slider";
+            document.getElementById("menu").appendChild(div_Aggregated_VaccinationstatusofaChildOnSchedule);
+            var lab_Aggregated_VaccinationstatusofaChildOnSchedule = document.createElement('div');
+            lab_Aggregated_VaccinationstatusofaChildOnSchedule.innerHTML  = 'Aggregated_Vaccination status of a Child | On Schedule: <span id="val_Aggregated_VaccinationstatusofaChildOnSchedule"></span>';
+            lab_Aggregated_VaccinationstatusofaChildOnSchedule.className = 'filterlabel';
+            document.getElementById("menu").appendChild(lab_Aggregated_VaccinationstatusofaChildOnSchedule);
+            var reset_Aggregated_VaccinationstatusofaChildOnSchedule = document.createElement('div');
+            reset_Aggregated_VaccinationstatusofaChildOnSchedule.innerHTML = 'clear filter';
+            reset_Aggregated_VaccinationstatusofaChildOnSchedule.className = 'filterlabel';
+            lab_Aggregated_VaccinationstatusofaChildOnSchedule.className = 'filterlabel';
+            reset_Aggregated_VaccinationstatusofaChildOnSchedule.onclick = function() {
+                sel_Aggregated_VaccinationstatusofaChildOnSchedule.noUiSlider.reset();
+            };
+            document.getElementById("menu").appendChild(reset_Aggregated_VaccinationstatusofaChildOnSchedule);
+            var sel_Aggregated_VaccinationstatusofaChildOnSchedule = document.getElementById('div_Aggregated_VaccinationstatusofaChildOnSchedule');
+            noUiSlider.create(sel_Aggregated_VaccinationstatusofaChildOnSchedule, {
+                connect: true,
+                start: [0, 466],
+                step: 1,
+                format: wNumb({
+                    decimals: 0,
+                    }),
+                range: {
+                min: 0,
+                max: 466
+                }
+            });
+            sel_Aggregated_VaccinationstatusofaChildOnSchedule.noUiSlider.on('update', function (values) {
+            filterVals =[];
+            for (value in values){
+            filterVals.push(parseInt(value))
+            }
+            val_Aggregated_VaccinationstatusofaChildOnSchedule = document.getElementById('val_Aggregated_VaccinationstatusofaChildOnSchedule');
+            val_Aggregated_VaccinationstatusofaChildOnSchedule.innerHTML = values.join(' - ');
+                filterFunc()
+            });
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_Aggregated_TotalChildrenVaccinatedbyAgeabove24 = document.createElement("div");
+            div_Aggregated_TotalChildrenVaccinatedbyAgeabove24.id = "div_Aggregated_TotalChildrenVaccinatedbyAgeabove24";
+            div_Aggregated_TotalChildrenVaccinatedbyAgeabove24.className = "slider";
+            document.getElementById("menu").appendChild(div_Aggregated_TotalChildrenVaccinatedbyAgeabove24);
+            var lab_Aggregated_TotalChildrenVaccinatedbyAgeabove24 = document.createElement('div');
+            lab_Aggregated_TotalChildrenVaccinatedbyAgeabove24.innerHTML  = 'Aggregated_Total Children Vaccinated by Age | above 24: <span id="val_Aggregated_TotalChildrenVaccinatedbyAgeabove24"></span>';
+            lab_Aggregated_TotalChildrenVaccinatedbyAgeabove24.className = 'filterlabel';
+            document.getElementById("menu").appendChild(lab_Aggregated_TotalChildrenVaccinatedbyAgeabove24);
+            var reset_Aggregated_TotalChildrenVaccinatedbyAgeabove24 = document.createElement('div');
+            reset_Aggregated_TotalChildrenVaccinatedbyAgeabove24.innerHTML = 'clear filter';
+            reset_Aggregated_TotalChildrenVaccinatedbyAgeabove24.className = 'filterlabel';
+            lab_Aggregated_TotalChildrenVaccinatedbyAgeabove24.className = 'filterlabel';
+            reset_Aggregated_TotalChildrenVaccinatedbyAgeabove24.onclick = function() {
+                sel_Aggregated_TotalChildrenVaccinatedbyAgeabove24.noUiSlider.reset();
+            };
+            document.getElementById("menu").appendChild(reset_Aggregated_TotalChildrenVaccinatedbyAgeabove24);
+            var sel_Aggregated_TotalChildrenVaccinatedbyAgeabove24 = document.getElementById('div_Aggregated_TotalChildrenVaccinatedbyAgeabove24');
+            noUiSlider.create(sel_Aggregated_TotalChildrenVaccinatedbyAgeabove24, {
+                connect: true,
+                start: [0, 18],
+                step: 1,
+                format: wNumb({
+                    decimals: 0,
+                    }),
+                range: {
+                min: 0,
+                max: 18
+                }
+            });
+            sel_Aggregated_TotalChildrenVaccinatedbyAgeabove24.noUiSlider.on('update', function (values) {
+            filterVals =[];
+            for (value in values){
+            filterVals.push(parseInt(value))
+            }
+            val_Aggregated_TotalChildrenVaccinatedbyAgeabove24 = document.getElementById('val_Aggregated_TotalChildrenVaccinatedbyAgeabove24');
+            val_Aggregated_TotalChildrenVaccinatedbyAgeabove24.innerHTML = values.join(' - ');
+                filterFunc()
+            });
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_Aggregated_TotalChildrenVaccinatedbyAge0to12 = document.createElement("div");
+            div_Aggregated_TotalChildrenVaccinatedbyAge0to12.id = "div_Aggregated_TotalChildrenVaccinatedbyAge0to12";
+            div_Aggregated_TotalChildrenVaccinatedbyAge0to12.className = "slider";
+            document.getElementById("menu").appendChild(div_Aggregated_TotalChildrenVaccinatedbyAge0to12);
+            var lab_Aggregated_TotalChildrenVaccinatedbyAge0to12 = document.createElement('div');
+            lab_Aggregated_TotalChildrenVaccinatedbyAge0to12.innerHTML  = 'Aggregated_Total Children Vaccinated by Age | 0 to 12: <span id="val_Aggregated_TotalChildrenVaccinatedbyAge0to12"></span>';
+            lab_Aggregated_TotalChildrenVaccinatedbyAge0to12.className = 'filterlabel';
+            document.getElementById("menu").appendChild(lab_Aggregated_TotalChildrenVaccinatedbyAge0to12);
+            var reset_Aggregated_TotalChildrenVaccinatedbyAge0to12 = document.createElement('div');
+            reset_Aggregated_TotalChildrenVaccinatedbyAge0to12.innerHTML = 'clear filter';
+            reset_Aggregated_TotalChildrenVaccinatedbyAge0to12.className = 'filterlabel';
+            lab_Aggregated_TotalChildrenVaccinatedbyAge0to12.className = 'filterlabel';
+            reset_Aggregated_TotalChildrenVaccinatedbyAge0to12.onclick = function() {
+                sel_Aggregated_TotalChildrenVaccinatedbyAge0to12.noUiSlider.reset();
+            };
+            document.getElementById("menu").appendChild(reset_Aggregated_TotalChildrenVaccinatedbyAge0to12);
+            var sel_Aggregated_TotalChildrenVaccinatedbyAge0to12 = document.getElementById('div_Aggregated_TotalChildrenVaccinatedbyAge0to12');
+            noUiSlider.create(sel_Aggregated_TotalChildrenVaccinatedbyAge0to12, {
+                connect: true,
+                start: [0, 516],
+                step: 1,
+                format: wNumb({
+                    decimals: 0,
+                    }),
+                range: {
+                min: 0,
+                max: 516
+                }
+            });
+            sel_Aggregated_TotalChildrenVaccinatedbyAge0to12.noUiSlider.on('update', function (values) {
+            filterVals =[];
+            for (value in values){
+            filterVals.push(parseInt(value))
+            }
+            val_Aggregated_TotalChildrenVaccinatedbyAge0to12 = document.getElementById('val_Aggregated_TotalChildrenVaccinatedbyAge0to12');
+            val_Aggregated_TotalChildrenVaccinatedbyAge0to12.innerHTML = values.join(' - ');
+                filterFunc()
+            });
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_MedicalPointHealthFacilityNameinEnglish = document.createElement('div');
+            div_MedicalPointHealthFacilityNameinEnglish.id = "div_MedicalPointHealthFacilityNameinEnglish";
+            div_MedicalPointHealthFacilityNameinEnglish.className= "filterselect";
+            document.getElementById("menu").appendChild(div_MedicalPointHealthFacilityNameinEnglish);
+            sel_MedicalPointHealthFacilityNameinEnglish = document.createElement('select');
+            sel_MedicalPointHealthFacilityNameinEnglish.multiple = true;
+            sel_MedicalPointHealthFacilityNameinEnglish.size = 10;
+            sel_MedicalPointHealthFacilityNameinEnglish.id = "sel_MedicalPointHealthFacilityNameinEnglish";
+            var MedicalPointHealthFacilityNameinEnglish_options_str = "<option value='' unselected></option>";
+            sel_MedicalPointHealthFacilityNameinEnglish.onchange = function(){filterFunc()};
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="AHED MP">AHED MP</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="AL EQLEMI ">AL EQLEMI </option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="ALKHAIR HOSPITAL">ALKHAIR HOSPITAL</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="ALNAHR ALBARED ">ALNAHR ALBARED </option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="AWDA Health Center - Asdaa">AWDA Health Center - Asdaa</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="AWDA Medical Point -Al-Aqsa University Area">AWDA Medical Point -Al-Aqsa University Area</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al Aqsa Hospital">Al Aqsa Hospital</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al Awda Hospital - Nuseirat">Al Awda Hospital - Nuseirat</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al Awda Medical Center">Al Awda Medical Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al Daraj MP.-Daraj Elem. Co-ed "A,B,D,E"">Al Daraj MP.-Daraj Elem. Co-ed "A,B,D,E"</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al Forsan Medical Center">Al Forsan Medical Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al Moustafa PHC">Al Moustafa PHC</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al QUDS Hospital - PRCS">Al QUDS Hospital - PRCS</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al Sahaba MP- PRCS">Al Sahaba MP- PRCS</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al Salam H C">Al Salam H C</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al Sawarha Medical Point">Al Sawarha Medical Point</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al Shaeikh Radwan PHC">Al Shaeikh Radwan PHC</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al Shati PHC ">Al Shati PHC </option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al musadar Center">Al musadar Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al zawidah Medical Point - PRCS">Al zawidah Medical Point - PRCS</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Amal Hospital">Al-Amal Hospital</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Athar">Al-Athar</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Awda Deir al-Balah">Al-Awda Deir al-Balah</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Bahr Primary Health Care Center /MdM F">Al-Bahr Primary Health Care Center /MdM F</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Baraka Medical Center">Al-Baraka Medical Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Daraj Martyrs Center">Al-Daraj Martyrs Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Falah Health Center">Al-Falah Health Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Hakr El jamea">Al-Hakr El jamea</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Hasaina Medical Point">Al-Hasaina Medical Point</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Jazairi Health Center">Al-Jazairi Health Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Kuwaiti Hospital - Palestinian Red Crescent Society">Al-Kuwaiti Hospital - Palestinian Red Crescent Society</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Maghazi Clinic - PRCS">Al-Maghazi Clinic - PRCS</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Mustafa Medical Point">Al-Mustafa Medical Point</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Quds Center is private">Al-Quds Center is private</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Sabra Medical Point - Palestinian Red Crescent Society">Al-Sabra Medical Point - Palestinian Red Crescent Society</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Sawarah Clinic - PRCS">Al-Sawarah Clinic - PRCS</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Sawarha (Al-Khawaldeh) Center">Al-Sawarha (Al-Khawaldeh) Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Tahrir Building">Al-Tahrir Building</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Tawbah MP">Al-Tawbah MP</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Zawaydeh Center">Al-Zawaydeh Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Al-Zaytoun Clinic - Palestinian Red Crescent Society">Al-Zaytoun Clinic - Palestinian Red Crescent Society</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Alasaftawi H C - UNRWA">Alasaftawi H C - UNRWA</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Almajada MP">Almajada MP</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Alquds PHC">Alquds PHC</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Arkan Health Center">Arkan Health Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Asdaa Medical Point">Asdaa Medical Point</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Asma Medical Point-Asma Prep Girls A, B">Asma Medical Point-Asma Prep Girls A, B</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Bir 19 MP - UNRWA">Bir 19 MP - UNRWA</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Blood Bank Clinic">Blood Bank Clinic</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Bureij Center Al-Jaded - Shuhada Albureij">Bureij Center Al-Jaded - Shuhada Albureij</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Burij Health Center">Burij Health Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Burij PRCS">Burij PRCS</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="CARE PHCC -Deir Al-Balah">CARE PHCC -Deir Al-Balah</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="CFTA Mawasi Medical Point">CFTA Mawasi Medical Point</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="CRS">CRS</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Deir El Balah Health Center">Deir El Balah Health Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="El Mofte Medical Point">El Mofte Medical Point</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="El-Najar MP">El-Najar MP</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Emargancy Rafah">Emargancy Rafah</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Emergency NGO - PHC Clinic Al Qarara - Khan Yunis">Emergency NGO - PHC Clinic Al Qarara - Khan Yunis</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Fathi Arafat PHC - PRCS">Fathi Arafat PHC - PRCS</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Free thoughts ">Free thoughts </option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Giving Without Borders Medical Clinic">Giving Without Borders Medical Clinic</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Haid Abdel Shafi Medical Center">Haid Abdel Shafi Medical Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Hamad HC - UNRWA">Hamad HC - UNRWA</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Heroic Hearts Al-Yasmin Primary Care">Heroic Hearts Al-Yasmin Primary Care</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Hidar Abed El shafi MP">Hidar Abed El shafi MP</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Hiker Al Jamea Medical Point">Hiker Al Jamea Medical Point</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Hunin MP">Hunin MP</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Husam">Husam</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="ICRC Fiel Hospital">ICRC Fiel Hospital</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="IMC Field Hospital - Al-Zawaida">IMC Field Hospital - Al-Zawaida</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="IMC field hospital - Middle Area">IMC field hospital - Middle Area</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Insan Medical Center">Insan Medical Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Jabalia Medical Clinic">Jabalia Medical Clinic</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Japanese HC - UNRWA">Japanese HC - UNRWA</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Juzoor Halima Al-Saadia">Juzoor Halima Al-Saadia</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Juzoor of Al-Atatreh">Juzoor of Al-Atatreh</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Juzoor of Anwar Aziz">Juzoor of Anwar Aziz</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Juzoor of Civil defense  ">Juzoor of Civil defense  </option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Kh/Younis Prep. Boys "A"">Kh/Younis Prep. Boys "A"</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Khanyounis Martyrs Primary Healthcare Center">Khanyounis Martyrs Primary Healthcare Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Khanyounis Primary Healthcare Center/MdMF">Khanyounis Primary Healthcare Center/MdMF</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="MDM Clinic - France - North Beach">MDM Clinic - France - North Beach</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="MSF Belgium Clinic - next to Al-Shifa Hospital">MSF Belgium Clinic - next to Al-Shifa Hospital</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="MSF Belgium Medical point">MSF Belgium Medical point</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="MSF Clinic Spain-Al-Zaytoun">MSF Clinic Spain-Al-Zaytoun</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="MSF Spain’s Al Attar PHCC">MSF Spain’s Al Attar PHCC</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Maghazi Center">Maghazi Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Maghazi Medical Point">Maghazi Medical Point</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Masqat Al Sabra PHC">Masqat Al Sabra PHC</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Mawasi HC - UNRWA">Mawasi HC - UNRWA</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Mawasi MSF-Spain-Fish Fresh">Mawasi MSF-Spain-Fish Fresh</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Mawasi-Khan Younis Primary Health Care Center/ MdM-F">Mawasi-Khan Younis Primary Health Care Center/ MdM-F</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Medical Point for the Holy Family School">Medical Point for the Holy Family School</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Medical Relief Association">Medical Relief Association</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Muawia HC - UNRWA">Muawia HC - UNRWA</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Nusairat Health Center">Nusairat Health Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Nuseirat Clinic - PRCS">Nuseirat Clinic - PRCS</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Nuseirat Martyrs Center">Nuseirat Martyrs Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="PAL MED  Shalet">PAL MED  Shalet</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="PHC- MSF Belgium Mawasi Khan Younis">PHC- MSF Belgium Mawasi Khan Younis</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="PRCS Mawasi">PRCS Mawasi</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="PRCS Mawasi Alqarara ">PRCS Mawasi Alqarara </option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Palestinian Medical Center">Palestinian Medical Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="QARRARA MP">QARRARA MP</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Red Crescent Medical Point -Alamin Aleamu">Red Crescent Medical Point -Alamin Aleamu</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Rimal MP-Rimal Elem. Co-ed "A" & "B"">Rimal MP-Rimal Elem. Co-ed "A" & "B"</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Salah Eddin MP -Salah Eddin Prep Boys A, B">Salah Eddin MP -Salah Eddin Prep Boys A, B</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Shefaa Alkwaity ">Shefaa Alkwaity </option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Sheikh Ajlin Point, Shamlakh Mosque">Sheikh Ajlin Point, Shamlakh Mosque</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Shumukh ">Shumukh </option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Solidarity Polyclinic (MAP)">Solidarity Polyclinic (MAP)</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Tal Al Rabie School (MSF) point">Tal Al Rabie School (MSF) point</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Tayara Clinic ">Tayara Clinic </option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Teb Alosra ">Teb Alosra </option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="UK MED FIXED PHC">UK MED FIXED PHC</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="UK Med Field Hospital">UK Med Field Hospital</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="West Nusairat Health Center">West Nusairat Health Center</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Yafa Hospital">Yafa Hospital</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="Zourub HC - UNRWA">Zourub HC - UNRWA</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="heroic haert bier 19">heroic haert bier 19</option>';
+            MedicalPointHealthFacilityNameinEnglish_options_str  += '<option value="shuhadaa Deir al-Balah Clinic">shuhadaa Deir al-Balah Clinic</option>';
+            sel_MedicalPointHealthFacilityNameinEnglish.innerHTML = MedicalPointHealthFacilityNameinEnglish_options_str;
+            div_MedicalPointHealthFacilityNameinEnglish.appendChild(sel_MedicalPointHealthFacilityNameinEnglish);
+            var lab_MedicalPointHealthFacilityNameinEnglish = document.createElement('div');
+            lab_MedicalPointHealthFacilityNameinEnglish.innerHTML = 'Medical Point - Health Facility Name in English';
+            lab_MedicalPointHealthFacilityNameinEnglish.className = 'filterlabel';
+            div_MedicalPointHealthFacilityNameinEnglish.appendChild(lab_MedicalPointHealthFacilityNameinEnglish);
+            var reset_MedicalPointHealthFacilityNameinEnglish = document.createElement('div');
+            reset_MedicalPointHealthFacilityNameinEnglish.innerHTML = 'clear filter';
+            reset_MedicalPointHealthFacilityNameinEnglish.className = 'filterlabel';
+            reset_MedicalPointHealthFacilityNameinEnglish.onclick = function() {
+                var options = document.getElementById("sel_MedicalPointHealthFacilityNameinEnglish").options;
+                for (var i=0; i < options.length; i++) {
+                    options[i].selected = false;
+                }
+                filterFunc();
+            };
+            div_MedicalPointHealthFacilityNameinEnglish.appendChild(reset_MedicalPointHealthFacilityNameinEnglish);
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_MedicalPointHealthFacilityNameinArabic = document.createElement('div');
+            div_MedicalPointHealthFacilityNameinArabic.id = "div_MedicalPointHealthFacilityNameinArabic";
+            div_MedicalPointHealthFacilityNameinArabic.className= "filterselect";
+            document.getElementById("menu").appendChild(div_MedicalPointHealthFacilityNameinArabic);
+            sel_MedicalPointHealthFacilityNameinArabic = document.createElement('select');
+            sel_MedicalPointHealthFacilityNameinArabic.multiple = true;
+            sel_MedicalPointHealthFacilityNameinArabic.size = 10;
+            sel_MedicalPointHealthFacilityNameinArabic.id = "sel_MedicalPointHealthFacilityNameinArabic";
+            var MedicalPointHealthFacilityNameinArabic_options_str = "<option value='' unselected></option>";
+            sel_MedicalPointHealthFacilityNameinArabic.onchange = function(){filterFunc()};
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value=" نقطة جذور العطاطرة الطبية"> نقطة جذور العطاطرة الطبية</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="Heroic Hearts الياسمين للرعاية الأولية">Heroic Hearts الياسمين للرعاية الأولية</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="IMC الزوايدة ">IMC الزوايدة </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="IMC دير البلح ">IMC دير البلح </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="MAP">MAP</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="MDM  عيادة ">MDM  عيادة </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="Project hope  الطيارة">Project hope  الطيارة</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="UK Med">UK Med</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="أطباء العالم اسبانيا - العطار">أطباء العالم اسبانيا - العطار</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="أطباء العالم اسبانيا - فش فرش">أطباء العالم اسبانيا - فش فرش</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="أطباء العالم- مواصي خانيونس">أطباء العالم- مواصي خانيونس</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="اتحاد الكنائس ">اتحاد الكنائس </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="الآثار ">الآثار </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="الأقصى ">الأقصى </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="الإقليمي">الإقليمي</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="البحر MDM">البحر MDM</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="التوبة">التوبة</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="الثقافة والفكر الحر">الثقافة والفكر الحر</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="الرمال الابتدائية المشتركة أ و ب">الرمال الابتدائية المشتركة أ و ب</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="الطارئة رفح">الطارئة رفح</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="العودة ">العودة </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="العودة دير البلح ">العودة دير البلح </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="العيادة الطارئة ">العيادة الطارئة </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="الفكر الحر">الفكر الحر</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="القدس الطبية ">القدس الطبية </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="المركز الطبي الفلسطيني ">المركز الطبي الفلسطيني </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="المستششفى الميداني البريطاني">المستششفى الميداني البريطاني</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="المستشفى الميداني الكويتي - PRCS السرايا">المستشفى الميداني الكويتي - PRCS السرايا</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="المصدر">المصدر</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="الهلال الأحمر المغازي">الهلال الأحمر المغازي</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="الهلال الزوايدة ">الهلال الزوايدة </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="الهلال السوارحة ">الهلال السوارحة </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="الهلال المواصي القرارة بجوار الاسطبل">الهلال المواصي القرارة بجوار الاسطبل</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="الهلال المواصي خانيونس بجوار النص">الهلال المواصي خانيونس بجوار النص</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="الهلال النصيرات ">الهلال النصيرات </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="بال ميد الشاليهات">بال ميد الشاليهات</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="بلجيكا MSF مواصي خانيونس">بلجيكا MSF مواصي خانيونس</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="جمعية الإغاثة الطبية ">جمعية الإغاثة الطبية </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="حكر الجامع">حكر الجامع</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="حيدر عبد الشافي غرب الكلية التقنية ، منزل إياد المقيد">حيدر عبد الشافي غرب الكلية التقنية ، منزل إياد المقيد</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="ذكور خان يونس الإعدادية أ ( حوراني قديمة)*">ذكور خان يونس الإعدادية أ ( حوراني قديمة)*</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="ذكور صلاح الدين الإعدادية أ ، ب">ذكور صلاح الدين الإعدادية أ ، ب</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="شفاء فلسطين - الكويتي">شفاء فلسطين - الكويتي</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="شهداء النصيرات">شهداء النصيرات</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="طب الاسرة">طب الاسرة</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="عيادة MDM -F فرنسا-الشاطئ الشمالي">عيادة MDM -F فرنسا-الشاطئ الشمالي</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="عيادة MSF اسبانيا-الزيتون">عيادة MSF اسبانيا-الزيتون</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="عيادة MSF بلجيكا-بجوار م.الشفاء">عيادة MSF بلجيكا-بجوار م.الشفاء</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="عيادة البريج المركزية">عيادة البريج المركزية</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="عيادة الزوايدة ">عيادة الزوايدة </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="عيادة الزيتون - جمعية الهلال الاحمر  الفلسطيني">عيادة الزيتون - جمعية الهلال الاحمر  الفلسطيني</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="عيادة السوارحة الخوالدة ">عيادة السوارحة الخوالدة </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="عيادة الصفطاوي وكالة">عيادة الصفطاوي وكالة</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="عيادة المصطفى للرعاية الأولية HHO">عيادة المصطفى للرعاية الأولية HHO</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="عيادة المغازي">عيادة المغازي</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="عيادة النصيرات الغربية ">عيادة النصيرات الغربية </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="عيادة النصيرات المركزية ">عيادة النصيرات المركزية </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="عيادة بنك الدم">عيادة بنك الدم</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="عيادة جباليا الطبية">عيادة جباليا الطبية</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="عيادة دير البلح">عيادة دير البلح</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="عيادة دير البلح المركزية">عيادة دير البلح المركزية</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="عيادة عطاء بلا حدود">عيادة عطاء بلا حدود</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="عيادة مسقط - الصبرة">عيادة مسقط - الصبرة</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="فتحي عرفات الهلال الأحمر">فتحي عرفات الهلال الأحمر</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="م ناصر مبنى التحرير">م ناصر مبنى التحرير</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مدرسة الدرج الابتدائية المشتركة">مدرسة الدرج الابتدائية المشتركة</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز  صحي المواصي - وكالة الغوث">مركز  صحي المواصي - وكالة الغوث</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز البركة الطبي">مركز البركة الطبي</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز الجزائري الصحي">مركز الجزائري الصحي</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز السلام">مركز السلام</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز العودة  الطبي">مركز العودة  الطبي</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز العودة- جامعة الأقصى">مركز العودة- جامعة الأقصى</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز العودة-أصداء">مركز العودة-أصداء</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز الفرسان الطبي">مركز الفرسان الطبي</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز الفلاح الصحي">مركز الفلاح الصحي</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز القدس خاص">مركز القدس خاص</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز انسان  الطبي">مركز انسان  الطبي</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز حيد عبد الشافي الطبي">مركز حيد عبد الشافي الطبي</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز شهداء الدرج">مركز شهداء الدرج</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز شهداء الشاطئ">مركز شهداء الشاطئ</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز شهداء الشيخ رضوان">مركز شهداء الشيخ رضوان</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز شهداء خانيونس">مركز شهداء خانيونس</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز صحي اربكان">مركز صحي اربكان</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز صحي البريج ">مركز صحي البريج </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز صحي اليابانية - وكالة الغوث">مركز صحي اليابانية - وكالة الغوث</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز صحي حمد - وكالة الغوث">مركز صحي حمد - وكالة الغوث</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز صحي زعرب - وكالة الغوث">مركز صحي زعرب - وكالة الغوث</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مركز صحي معاوية - وكالة الغوث">مركز صحي معاوية - وكالة الغوث</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مستشفى الامل - الهلال">مستشفى الامل - الهلال</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مستشفى الخير">مستشفى الخير</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مستشفى الصليب الميداني">مستشفى الصليب الميداني</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مستشفى القدس">مستشفى القدس</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="مستشفى يافا">مستشفى يافا</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة أصداء الطبية">نقطة أصداء الطبية</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة أطباء بلا حدود (MSF)  بلجيكا">نقطة أطباء بلا حدود (MSF)  بلجيكا</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة أطباء بلا حدود (MSF) مدرسة تل الربيع ">نقطة أطباء بلا حدود (MSF) مدرسة تل الربيع </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة البريج الهلال الاحمر">نقطة البريج الهلال الاحمر</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة الحساينة الطبية">نقطة الحساينة الطبية</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة السوارحة الطبية">نقطة السوارحة الطبية</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة الشموخ">نقطة الشموخ</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة الشيخ عجلين مسجد شملخ">نقطة الشيخ عجلين مسجد شملخ</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة القرارة الطبية">نقطة القرارة الطبية</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة المجايدة">نقطة المجايدة</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة المصطفى  الطبية">نقطة المصطفى  الطبية</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة المغازي الطبية ">نقطة المغازي الطبية </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة النجار - كرزة">نقطة النجار - كرزة</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة النهر البارد">نقطة النهر البارد</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة الهلال الأحمر الطبية -الامن العام">نقطة الهلال الأحمر الطبية -الامن العام</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة بئر 19 الطبية - وكالة الغوث">نقطة بئر 19 الطبية - وكالة الغوث</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة جذور أنور عزيز الطبية">نقطة جذور أنور عزيز الطبية</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة جذور الدفاع المدني الطبية">نقطة جذور الدفاع المدني الطبية</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة جذور حليمة السعدية الطبية">نقطة جذور حليمة السعدية الطبية</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة حكر الجامع الطبية">نقطة حكر الجامع الطبية</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة حنين الطبية">نقطة حنين الطبية</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة طبية الصبرة - جمعية الهلال الاحمر  الفلسطيني">نقطة طبية الصبرة - جمعية الهلال الاحمر  الفلسطيني</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة طبية الصحابة - جمعية الهلال الاحمر  الفلسطيني">نقطة طبية الصحابة - جمعية الهلال الاحمر  الفلسطيني</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة طبية لمؤسسة جذورمدرسة العائلة المقدسة">نقطة طبية لمؤسسة جذورمدرسة العائلة المقدسة</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة طبية مدرسة أسماء الابتدائية">نقطة طبية مدرسة أسماء الابتدائية</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة عائد الطبية">نقطة عائد الطبية</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة كير الطبية">نقطة كير الطبية</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="نقطة مدرسة المفتي الطبية ">نقطة مدرسة المفتي الطبية </option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="هيرويك هارتس بئر 19 البسمة">هيرويك هارتس بئر 19 البسمة</option>';
+            MedicalPointHealthFacilityNameinArabic_options_str  += '<option value="هيوسم">هيوسم</option>';
+            sel_MedicalPointHealthFacilityNameinArabic.innerHTML = MedicalPointHealthFacilityNameinArabic_options_str;
+            div_MedicalPointHealthFacilityNameinArabic.appendChild(sel_MedicalPointHealthFacilityNameinArabic);
+            var lab_MedicalPointHealthFacilityNameinArabic = document.createElement('div');
+            lab_MedicalPointHealthFacilityNameinArabic.innerHTML = 'Medical Point - Health Facility Name in Arabic';
+            lab_MedicalPointHealthFacilityNameinArabic.className = 'filterlabel';
+            div_MedicalPointHealthFacilityNameinArabic.appendChild(lab_MedicalPointHealthFacilityNameinArabic);
+            var reset_MedicalPointHealthFacilityNameinArabic = document.createElement('div');
+            reset_MedicalPointHealthFacilityNameinArabic.innerHTML = 'clear filter';
+            reset_MedicalPointHealthFacilityNameinArabic.className = 'filterlabel';
+            reset_MedicalPointHealthFacilityNameinArabic.onclick = function() {
+                var options = document.getElementById("sel_MedicalPointHealthFacilityNameinArabic").options;
+                for (var i=0; i < options.length; i++) {
+                    options[i].selected = false;
+                }
+                filterFunc();
+            };
+            div_MedicalPointHealthFacilityNameinArabic.appendChild(reset_MedicalPointHealthFacilityNameinArabic);
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_TeamsOrganization = document.createElement('div');
+            div_TeamsOrganization.id = "div_TeamsOrganization";
+            div_TeamsOrganization.className= "filterselect";
+            document.getElementById("menu").appendChild(div_TeamsOrganization);
+            sel_TeamsOrganization = document.createElement('select');
+            sel_TeamsOrganization.multiple = true;
+            sel_TeamsOrganization.size = 6;
+            sel_TeamsOrganization.id = "sel_TeamsOrganization";
+            var TeamsOrganization_options_str = "<option value='' unselected></option>";
+            sel_TeamsOrganization.onchange = function(){filterFunc()};
+            TeamsOrganization_options_str  += '<option value="MOH">MOH</option>';
+            TeamsOrganization_options_str  += '<option value="MSF">MSF</option>';
+            TeamsOrganization_options_str  += '<option value="MoH">MoH</option>';
+            TeamsOrganization_options_str  += '<option value="PCRS">PCRS</option>';
+            TeamsOrganization_options_str  += '<option value="PRCS">PRCS</option>';
+            TeamsOrganization_options_str  += '<option value="UNRWA">UNRWA</option>';
+            sel_TeamsOrganization.innerHTML = TeamsOrganization_options_str;
+            div_TeamsOrganization.appendChild(sel_TeamsOrganization);
+            var lab_TeamsOrganization = document.createElement('div');
+            lab_TeamsOrganization.innerHTML = 'Teams Organization';
+            lab_TeamsOrganization.className = 'filterlabel';
+            div_TeamsOrganization.appendChild(lab_TeamsOrganization);
+            var reset_TeamsOrganization = document.createElement('div');
+            reset_TeamsOrganization.innerHTML = 'clear filter';
+            reset_TeamsOrganization.className = 'filterlabel';
+            reset_TeamsOrganization.onclick = function() {
+                var options = document.getElementById("sel_TeamsOrganization").options;
+                for (var i=0; i < options.length; i++) {
+                    options[i].selected = false;
+                }
+                filterFunc();
+            };
+            div_TeamsOrganization.appendChild(reset_TeamsOrganization);
+        </script>        
+    </body>
+</html>
