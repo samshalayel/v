@@ -10,7 +10,7 @@ BASE = 'C:/Users/Administrator/gaza_vaccination'
 phc_updated = pd.read_excel(BASE + '/data/phc_center_updated.xlsx')
 phc_tb = pd.read_excel(BASE + '/data/phc_center_tb.xlsx')
 geo = pd.read_excel(BASE + '/data/geolocation_tb.xlsx')
-r3_df = pd.read_excel(BASE + '/data/person_vaccine_tb_r3.xlsx')
+r3_df = pd.read_excel(BASE + '/data/r3333.xlsx')
 loc_csv = pd.read_csv(BASE + '/data/location_point_unified_corrected.csv')
 
 # Governorate resolution chain

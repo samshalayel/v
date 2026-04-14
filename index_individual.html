@@ -13251,6 +13251,15 @@ var FormatOptions = [
             icon.className = menu.classList.contains('collapsed') ? 'fas fa-chevron-right' : 'fas fa-chevron-left';
         });
 
+        // === R1 Card: Toggle Hide/Show ===
+        document.getElementById('r1-toggle-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            var card = document.getElementById('r1-card');
+            var icon = document.getElementById('r1-toggle-icon');
+            card.classList.toggle('collapsed');
+            icon.className = card.classList.contains('collapsed') ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+        });
+
         // === R3 Card: Toggle Hide/Show ===
         document.getElementById('r3-toggle-btn').addEventListener('click', function(e) {
             e.stopPropagation();
@@ -13463,7 +13472,7 @@ var FormatOptions = [
 
               <rect x="180" y="366" width="100" height="36" rx="10" fill="#fef3c7"/>
               <text x="230" y="381" font-size="11" font-weight="800" fill="#92400e" text-anchor="middle">Round 3</text>
-              <text x="230" y="395" font-size="10" fill="#d97706" text-anchor="middle">1,056 defaulters</text>
+              <text x="230" y="395" font-size="10" fill="#d97706" text-anchor="middle">1,203 defaulters</text>
 
               <!-- ── R1 only ── -->
               <text x="108" y="156" font-size="28" font-weight="900" fill="#5b21b6" text-anchor="middle">3,391</text>
@@ -13471,19 +13480,19 @@ var FormatOptions = [
               <text x="108" y="184" font-size="8.5" fill="#a78bfa" text-anchor="middle">92.2%</text>
 
               <!-- ── R2 only ── -->
-              <text x="352" y="156" font-size="28" font-weight="900" fill="#047857" text-anchor="middle">2,583</text>
+              <text x="352" y="156" font-size="28" font-weight="900" fill="#047857" text-anchor="middle">2,580</text>
               <text x="352" y="172" font-size="9.5" font-weight="700" fill="#059669" text-anchor="middle">R2 only</text>
-              <text x="352" y="184" font-size="8.5" fill="#6ee7b7" text-anchor="middle">89.2%</text>
+              <text x="352" y="184" font-size="8.5" fill="#6ee7b7" text-anchor="middle">89.1%</text>
 
               <!-- ── R3 only ── -->
-              <text x="230" y="318" font-size="28" font-weight="900" fill="#92400e" text-anchor="middle">924</text>
+              <text x="230" y="318" font-size="28" font-weight="900" fill="#92400e" text-anchor="middle">1,066</text>
               <text x="230" y="333" font-size="9.5" font-weight="700" fill="#d97706" text-anchor="middle">R3 only</text>
-              <text x="230" y="345" font-size="8.5" fill="#f59e0b" text-anchor="middle">87.5%</text>
+              <text x="230" y="345" font-size="8.5" fill="#f59e0b" text-anchor="middle">88.6%</text>
 
               <!-- ── R1 ∩ R2 ── clickable -->
               <g onclick="openVennDetail('r1r2')" style="cursor:pointer;" onmouseover="this.querySelector('rect').style.fill='rgba(99,102,241,.3)'" onmouseout="this.querySelector('rect').style.fill='rgba(99,102,241,.15)'">
                 <rect x="196" y="100" width="68" height="34" rx="8" fill="rgba(99,102,241,.15)" stroke="rgba(99,102,241,.6)" stroke-width="1.5"/>
-                <text x="230" y="118" font-size="16" font-weight="900" fill="#3730a3" text-anchor="middle">230</text>
+                <text x="230" y="118" font-size="16" font-weight="900" fill="#3730a3" text-anchor="middle">228</text>
                 <text x="230" y="129" font-size="8" fill="#4f46e5" text-anchor="middle">R1 ∩ R2 👆</text>
               </g>
 
@@ -13497,14 +13506,14 @@ var FormatOptions = [
               <!-- ── R2 ∩ R3 ── clickable -->
               <g onclick="openVennDetail('r2r3')" style="cursor:pointer;" onmouseover="this.querySelector('rect').style.fill='rgba(99,102,241,.3)'" onmouseout="this.querySelector('rect').style.fill='rgba(99,102,241,.15)'">
                 <rect x="274" y="242" width="56" height="34" rx="8" fill="rgba(99,102,241,.15)" stroke="rgba(99,102,241,.6)" stroke-width="1.5"/>
-                <text x="302" y="260" font-size="16" font-weight="900" fill="#3730a3" text-anchor="middle">76</text>
+                <text x="302" y="260" font-size="16" font-weight="900" fill="#3730a3" text-anchor="middle">79</text>
                 <text x="302" y="271" font-size="8" fill="#4f46e5" text-anchor="middle">R2∩R3 👆</text>
               </g>
 
               <!-- ── Center ── clickable -->
               <g onclick="openVennDetail('r1r2r3')" style="cursor:pointer;" onmouseover="this.querySelector('circle').style.fill='rgba(220,38,38,.35)'" onmouseout="this.querySelector('circle').style.fill='rgba(220,38,38,.18)'">
                 <circle cx="230" cy="198" r="24" fill="rgba(220,38,38,.18)" stroke="#ef4444" stroke-width="2"/>
-                <text x="230" y="194" font-size="14" font-weight="900" fill="#dc2626" text-anchor="middle">6</text>
+                <text x="230" y="194" font-size="14" font-weight="900" fill="#dc2626" text-anchor="middle">8</text>
                 <text x="230" y="207" font-size="7.5" font-weight="700" fill="#dc2626" text-anchor="middle">All 3 👆</text>
               </g>
             </svg>
@@ -13530,7 +13539,7 @@ var FormatOptions = [
               </div>
               <div style="background:#fef2f2;border-radius:12px;padding:12px 14px;border-left:4px solid #ef4444;">
                 <div style="font-size:0.7rem;color:#ef4444;font-weight:700;margin-bottom:2px;">⚠ Chronic — all 3 rounds</div>
-                <div style="font-size:1.5rem;font-weight:900;color:#dc2626;line-height:1;">6</div>
+                <div style="font-size:1.5rem;font-weight:900;color:#dc2626;line-height:1;">8</div>
                 <div style="font-size:0.7rem;color:#fca5a5;margin-top:2px;">Highest follow-up priority</div>
               </div>
 
@@ -13539,7 +13548,7 @@ var FormatOptions = [
                 <div style="font-size:0.7rem;font-weight:700;color:#64748b;margin-bottom:7px;">Intersections</div>
                 <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
                   <span style="font-size:0.72rem;color:#4f46e5;">R1 ∩ R2</span>
-                  <span style="font-weight:800;font-size:0.82rem;color:#3730a3;">230</span>
+                  <span style="font-weight:800;font-size:0.82rem;color:#3730a3;">228</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
                   <span style="font-size:0.72rem;color:#4f46e5;">R1 ∩ R3</span>
@@ -13547,7 +13556,7 @@ var FormatOptions = [
                 </div>
                 <div style="display:flex;justify-content:space-between;">
                   <span style="font-size:0.72rem;color:#4f46e5;">R2 ∩ R3</span>
-                  <span style="font-weight:800;font-size:0.82rem;color:#3730a3;">76</span>
+                  <span style="font-weight:800;font-size:0.82rem;color:#3730a3;">79</span>
                 </div>
               </div>
 

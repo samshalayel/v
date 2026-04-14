@@ -10,7 +10,7 @@ BASE = 'C:/Users/Administrator/gaza_vaccination'
 phc_updated = pd.read_excel(BASE + '/data/phc_center_updated.xlsx')
 phc_tb = pd.read_excel(BASE + '/data/phc_center_tb.xlsx')
 geo = pd.read_excel(BASE + '/data/geolocation_tb.xlsx')
-r2_df = pd.read_excel('C:/r2.xlsx')
+r2_df = pd.read_excel(BASE + '/data/r2222.xlsx')
 loc_csv = pd.read_csv(BASE + '/data/location_point_unified_corrected.csv')
 
 print(f'R2 records loaded: {len(r2_df)}')
