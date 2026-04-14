@@ -1,0 +1,124 @@
+﻿#,Governorate,Site Address,Medical Point - Health Facility Name in Arabic,Medical Point - Health Facility Name in English,Organization,Long,Lat,Teams Organization
+1,North Gaza,الكرامة,نقطة أطباء بلا حدود (MSF)  بلجيكا,MSF Belgium Medical point,MSF Belgium,34.469722,31.543056,MoH
+2,North Gaza,التوام قرب بيتنا,مركز الفرسان الطبي,Al Forsan Medical Center,MoH,34.478056,31.543333,MoH
+3,North Gaza,الدفاع المدني,نقطة جذور الدفاع المدني الطبية,Juzoor of Civil defense  ,MoH,34.485,31.5375,MoH
+4,North Gaza,جباليا ,عيادة جباليا الطبية,Jabalia Medical Clinic,MoH,34.484444,31.5275,MoH
+5,North Gaza,جباليا النزلة,نقطة جذور حليمة السعدية الطبية,Juzoor Halima Al-Saadia,Juzoor,34.476944,31.531111,MoH
+6,North Gaza,م. جباليا الستة الشهداء,مركز حيد عبد الشافي الطبي,Haid Abdel Shafi Medical Center,ACHA,34.494167,31.541111,MoH
+7,North Gaza,بيت لاهيا الدوار الغربي,نقطة أطباء بلا حدود (MSF) مدرسة تل الربيع ,Tal Al Rabie School (MSF) point,MSF,34.495,31.546389,MoH
+8,North Gaza,مشروع بيت لاهيا,مركز انسان  الطبي,Insan Medical Center,MoH,34.500556,31.544444,MoH
+9,North Gaza,شارع احمد ياسين ,نقطة المصطفى  الطبية,Al-Mustafa Medical Point,Juzoor,34.470556,31.535556,MoH
+10,North Gaza,م/اليمني السعيد ,نقطة جذور أنور عزيز الطبية,Juzoor of Anwar Aziz,Juzoor,34.496111,31.536944,MoH
+11,North Gaza,دوار العطاطرة, نقطة جذور العطاطرة الطبية,Juzoor of Al-Atatreh,Juzoor,34.483611,31.551389,MoH
+12,North Gaza,حلاوة,مركز العودة  الطبي,Al Awda Medical Center,Al Awda Health and Community Association,34.476944,31.521389,MoH
+13,North Gaza,الصفطاوي,عيادة الصفطاوي وكالة,Alasaftawi H C - UNRWA,UNRWA,34.47876,31.53776,UNRWA
+14,North Gaza,الامن العام,نقطة الهلال الأحمر الطبية -الامن العام,Red Crescent Medical Point -Alamin Aleamu,Palestine Red Crescent Society,34.466389,31.540556,MoH
+15,Middle zone,West of Deir Al-Balah Camp – opposite the Club,عيادة دير البلح المركزية,Deir El Balah Health Center,UNRWA,34.33875402,31.42408591,UNRWA
+16,Middle zone,Al-Hikr Area- D/Balah prep. boys C School,نقطة حكر الجامع الطبية,Hiker Al Jamea Medical Point,UNRWA,34.34037143,31.40507307,UNRWA
+17,Middle zone,Beside Maghazi  Club –Maghazi Elem.Co-ed 'A' School,نقطة المغازي الطبية ,Maghazi Medical Point,UNRWA,34.38518029,31.4212555,UNRWA
+18,Middle zone,Buriej-Block 6 – Near Al-Bureij Services Club,عيادة البريج المركزية,Burij Health Center,UNRWA,34.4056066,31.4388341,UNRWA
+19,Middle zone,Al-Nuseirat Camp – Block 1,عيادة النصيرات المركزية ,Nusairat Health Center,UNRWA,34.38955372,31.44843759,UNRWA
+20,Middle zone,Al Sawarha-Nusierat Prep. Girls 'C' School,نقطة السوارحة الطبية,Al Sawarha Medical Point,UNRWA,34.37512137,31.4437576,UNRWA
+21,Middle zone,Hasaina-Nuseirat Prep. Co-ed 'A' School,نقطة الحساينة الطبية,Al-Hasaina Medical Point,UNRWA,34.37624367,31.45076453,UNRWA
+22,Middle zone,Nusairat Camp-New Camp,عيادة النصيرات الغربية ,West Nusairat Health Center,UNRWA,34.38969277,31.46023466,UNRWA
+23,Middle zone,Nusairat Camp-New Camp -El Mofte Elem. Co-ed School,نقطة مدرسة المفتي الطبية ,El Mofte Medical Point,UNRWA,34.39523112,31.45333246,UNRWA
+24,Middle zone,Buriej-PRCS,نقطة البريج الهلال الاحمر,Burij PRCS,Palestine Red Crescent Society,34.4006053,31.4428774,UNRWA
+25,Middle zone,Deir El Balah,حكر الجامع,Al-Hakr El jamea,MoH,34.34246341,31.40674124,MOH
+26,Middle zone,Deir El Balah,العودة دير البلح ,Al-Awda Deir al-Balah,Al Awda Health and Community Association,34.328443,31.401134,MOH
+27,Middle zone,Deir El Balah,مركز البركة الطبي,Al-Baraka Medical Center,Mawaddah Relief and Development Association,34.332979,31.40677,MOH
+28,Middle zone,Deir El Balah,MAP,Solidarity Polyclinic (MAP),Medical Aid for Palestinians,34.31935736,31.40424978,MOH
+29,Middle zone,Deir El Balah,البحر MDM,Al-Bahr Primary Health Care Center /MdM F,Médecins du Monde,34.320301,31.408829,MOH
+30,Middle zone,Deir El Balah,الآثار ,Al-Athar,Project Hope (Health Opportunities for People Everywhere),34.329593,31.417347,MOH
+31,Middle zone,Deir El Balah,التوبة,Al-Tawbah MP,Project Hope (Health Opportunities for People Everywhere),34.340928,31.41862,MOH
+32,Middle zone,Deir El Balah,فتحي عرفات الهلال الأحمر,Fathi Arafat PHC - PRCS,Palestine Red Crescent Society,34.34324174,31.4227124,MOH
+33,Middle zone,Deir El Balah,مستشفى يافا,Yafa Hospital,YAFFA HOSPITAL,34.34515173,31.41821476,MOH
+34,Middle zone,Deir El Balah,عيادة دير البلح,shuhadaa Deir al-Balah Clinic,MoH,34.3492496,31.4168184,MOH
+35,Middle zone,Deir El Balah,نقطة كير الطبية,CARE PHCC -Deir Al-Balah,Cooperative for Assistance and Relief Everywhere,34.3457344,31.41370518,MOH
+36,Middle zone,Deir El Balah,الفكر الحر,Free thoughts ,Free Thought ,34.34816435,31.41741518,MOH
+37,Middle zone,Deir El Balah,جمعية الإغاثة الطبية ,Medical Relief Association,Medical Relief Association,34.351129,31.41268,MOH
+38,Middle zone,Almaghazi,عيادة المغازي,Maghazi Center,MoH,34.3882104,31.4245531,MOH
+39,Middle zone,Almaghazi,الهلال الأحمر المغازي,Al-Maghazi Clinic - PRCS,Palestine Red Crescent Society,34.38171,31.42305,MOH
+40,Middle zone,Deir El Balah,المصدر,Al musadar Center,MoH,34.348997,31.422241,MOH
+41,Middle zone,Deir El Balah,UK Med,UK MED FIXED PHC,UK-MED,34.35433,31.43646,MOH
+42,Middle zone,Deir El Balah,"حيدر عبد الشافي غرب الكلية التقنية ، منزل إياد المقيد",Hidar Abed El shafi MP,ACHA,34.354263,31.425571,MOH
+43,Middle zone,Alzawaida,عيادة الزوايدة ,Al-Zawaydeh Center,MoH,34.3683701,31.4290369,MOH
+44,Middle zone,Deir El Balah,IMC الزوايدة ,IMC Field Hospital - Al-Zawaida,IMC,34.357917,31.443733,MOH
+45,Middle zone,Deir El Balah,IMC دير البلح ,IMC field hospital - Middle Area,IMC,34.346268,31.432989,MOH
+46,Middle zone,Deir El Balah,الأقصى ,Al Aqsa Hospital,MoH,34.35987552,31.41991482,MOH
+47,Middle zone,Deir El Balah,Project hope  الطيارة,Tayara Clinic ,Project Hope (Health Opportunities for People Everywhere),34.354585,31.417508,MOH
+48,Middle zone,Deir El Balah,القدس الطبية ,Alquds PHC,Egyptian Red Crescent,34.34560876,31.42930455,MOH
+49,Middle zone,Albureij,مركز صحي البريج ,Bureij Center Al-Jaded - Shuhada Albureij,MoH,34.4003753,31.4393312,MOH
+50,Middle zone,Alnuseirat,شهداء النصيرات,Nuseirat Martyrs Center,MoH,34.3859752,31.4396829,MOH
+51,Middle zone,Deir El Balah,المركز الطبي الفلسطيني ,Palestinian Medical Center,Palestinian Medical Center,34.39455043,31.44606252,MOH
+52,Middle zone,Deir El Balah,العودة ,Al Awda Hospital - Nuseirat,Al Awda Health and Community Association,34.38941694,31.44841093,MOH
+53,Middle zone,Deir El Balah,اتحاد الكنائس ,CRS,CRS,34.383615,31.444497,MOH
+54,Middle zone,Alnuseirat,الهلال النصيرات ,Nuseirat Clinic - PRCS,Palestine Red Crescent Society,34.39155,31.44941,MOH
+55,Middle zone,Alsawarha,عيادة السوارحة الخوالدة ,Al-Sawarha (Al-Khawaldeh) Center,Médecins du Monde,34.3670997,31.4385752,MOH
+56,Middle zone,Alsawarha,الهلال السوارحة ,Al-Sawarah Clinic - PRCS,Palestine Red Crescent Society,34.3653,31.44061,MOH
+57,Middle zone,Alzawaida,الهلال الزوايدة ,Al zawidah Medical Point - PRCS,Palestine Red Crescent Society,34.38064,31.43951,MOH
+58,Gaza,AlShati مخيم  الشاطئ,مركز شهداء الشاطئ,Al Shati PHC ,MOH,34.4532194,31.5394234,MOH
+59,Gaza,Al Zaytoon   حي الزيتون,عيادة الزيتون - جمعية الهلال الاحمر  الفلسطيني,Al-Zaytoun Clinic - Palestinian Red Crescent Society,PCRS,34.45904,31.49924,PCRS
+60,Gaza,Al Sheikh Ejleen  الشيخ عجلين,نقطة الشيخ عجلين مسجد شملخ,"Sheikh Ajlin Point, Shamlakh Mosque",MOH,34.4175,31.500278,MOH
+61,Gaza,Tal Alhawaa  تل الهوا,مستشفى القدس,Al QUDS Hospital - PRCS,PCRS,34.43041685,31.50593493,PCRS
+62,Gaza,,عيادة المصطفى للرعاية الأولية HHO,Al Moustafa PHC,HHO,34.438056,31.523056,MOH
+63,Gaza,Al Sabra   الصبرة,عيادة مسقط - الصبرة,Masqat Al Sabra PHC,MOH,34.45130953,31.5066731,MOH
+64,Gaza,Al Shaeikh Radwan   الشيخ رضوان,مركز شهداء الشيخ رضوان,Al Shaeikh Radwan PHC,MOH,34.4700466,31.5328893,MOH
+65,Gaza,,Heroic Hearts الياسمين للرعاية الأولية,Heroic Hearts Al-Yasmin Primary Care,Heroic Hearts,34.438056,31.523056,MOH
+66,Gaza,Al Daraj  الدرج,مركز شهداء الدرج,Al-Daraj Martyrs Center,MOH,34.4592005,31.5127219,MOH
+67,Gaza,Al Abass  العباس,عيادة بنك الدم,Blood Bank Clinic,MOH,34.438056,31.523056,MOH
+68,Gaza,Al Shifaa Hospital   م الشفاء,عيادة MSF بلجيكا-بجوار م.الشفاء,MSF Belgium Clinic - next to Al-Shifa Hospital,MSF Belgium,34.441111,31.523056,MOH
+69,Gaza,Al Saraya    السرايا,المستشفى الميداني الكويتي - PRCS السرايا,Al-Kuwaiti Hospital - Palestinian Red Crescent Society,PCRS,34.450556,31.513611,MOH
+70,Gaza,Al Sabra   الصبرة,نقطة طبية الصبرة - جمعية الهلال الاحمر  الفلسطيني,Al-Sabra Medical Point - Palestinian Red Crescent Society,PCRS,34.44997,31.50897,MOH
+71,Gaza,,نقطة طبية لمؤسسة جذورمدرسة العائلة المقدسة,Medical Point for the Holy Family School,JUZOUR,34.438056,31.523056,MOH
+72,Gaza,,مركز صحي اربكان,Arkan Health Center,MOH,34.438056,31.523056,MOH
+73,Gaza,Al Sinaa   الصناعة,مركز السلام,Al Salam H C,MOH,34.4471449,31.5087703,MOH
+74,Gaza,الزيتون,عيادة MSF اسبانيا-الزيتون,MSF Clinic Spain-Al-Zaytoun,MSF Spain,34.443056,31.496944,MOH
+75,Gaza,Al Sahaba    الصحابة,نقطة طبية الصحابة - جمعية الهلال الاحمر  الفلسطيني,Al Sahaba MP- PRCS,PCRS,34.46041,31.51616,PCRS
+76,Gaza,Al Daraj  الدرج,مدرسة الدرج الابتدائية المشتركة,"Al Daraj MP.-Daraj Elem. Co-ed ""A,B,D,E""",UNRWA,34.46557,31.5073,UNRWA
+77,Gaza,Al Rimal  الرمال,الرمال الابتدائية المشتركة أ و ب,"Rimal MP-Rimal Elem. Co-ed ""A"" & ""B""",UNRWA,34.44350555,31.51551951,UNRWA
+78,Gaza,AlShati مخيم  الشاطئ,نقطة طبية مدرسة أسماء الابتدائية,"Asma Medical Point-Asma Prep Girls A, B",UNRWA,34.44843,31.528658,UNRWA
+79,Gaza,Alrimal الرمال,"ذكور صلاح الدين الإعدادية أ ، ب","Salah Eddin MP -Salah Eddin Prep Boys A, B",UNRWA,34.45579367,31.52117148,UNRWA
+80,Gaza,AlShati مخيم  الشاطئ,عيادة MDM -F فرنسا-الشاطئ الشمالي,MDM Clinic - France - North Beach,MDM,34.453056,31.539167,MOH
+81,Gaza,Al Tofah  حي التفاح,مركز الجزائري الصحي,Al-Jazairi Health Center,MOH,34.473611,31.510556,MOH
+82,Gaza,Tal Alhawaa  تل الهوا,مركز الفلاح الصحي,Al-Falah Health Center,MOH,34.428889,31.509444,MOH
+83,Rafah ,Fish Fresh - behide Muawia Mosque,مركز صحي معاوية - وكالة الغوث,Muawia HC - UNRWA,UNRWA,34.241429,31.338187,UNRWA
+84,Khan Younis  ,Mawasi Khanyounis - Bir 19 -  Alsunia Camp,نقطة بئر 19 الطبية - وكالة الغوث,Bir 19 MP - UNRWA,UNRWA,34.2604517,31.343415,UNRWA
+85,Khan Younis  ,Mawasi Khanyounis -Behinde  Cafeteria ElKhal,مركز صحي زعرب - وكالة الغوث,Zourub HC - UNRWA,UNRWA,34.2562,31.352339,UNRWA
+86,Khan Younis  ,Mawasi Khanyounis - Mumer el Farra ,مركز  صحي المواصي - وكالة الغوث,Mawasi HC - UNRWA,UNRWA,34.270385,31.361199,UNRWA
+87,Khan Younis  ,Dahra -behide Al Batch center,ذكور خان يونس الإعدادية أ ( حوراني قديمة)*,"Kh/Younis Prep. Boys ""A""",UNRWA,34.29195263,31.34859067,UNRWA
+88,Khan Younis  ,AL Mashrou - behinde KYTC UNRWA,مركز صحي اليابانية - وكالة الغوث,Japanese HC - UNRWA,UNRWA,34.2949142,31.3620985,UNRWA
+89,Khan Younis  ,Hamad City,مركز صحي حمد - وكالة الغوث,Hamad HC - UNRWA,UNRWA,34.306698,31.394863,UNRWA
+90,Khan Younis  ,Qarar - Behinde Hunin Mosque,نقطة حنين الطبية,Hunin MP,UNRWA,34.302078,31.392643,UNRWA
+91,Khan Younis  ,Khanyounis - م ناصر,MDM  عيادة ,Khanyounis Primary Healthcare Center/MdMF,MDM ,34.295278,31.346694,MoH
+92,Khan Younis  ,Al Qarara - Khan Yunis,العيادة الطارئة ,Emergency NGO - PHC Clinic Al Qarara - Khan Yunis,Emergency NGO,34.307611,31.394194,MoH
+93,Rafah,Fish Freshمسجد مطر           ,أطباء العالم اسبانيا - فش فرش,Mawasi MSF-Spain-Fish Fresh,MSF SPAIN,34.246861,31.344222,MoH
+94,Rafah,Rafah     الشاليه الألماني ,الطارئة رفح,Emargancy Rafah,MoH,34.250222,31.341444,MoH
+95,Khan Younis  ,Alattar- العطار,عيادة عطاء بلا حدود,Giving Without Borders Medical Clinic,MoH,34.2689665,31.3522494,MoH
+96,Khan Younis  ,Mawasi Khanyounis كرزة,نقطة النجار - كرزة,El-Najar MP,MoH,34.261119,31.35761,MoH
+97,Rafah,Mawasi Khanyounis,المستششفى الميداني البريطاني,UK Med Field Hospital,UK MED,34.248667,31.346194,MoH
+98,Rafah,Mawasi Khanyounis,الثقافة والفكر الحر,CFTA Mawasi Medical Point,CFTA,34.254222,31.351722,MoH
+99,Khan Younis  ,Khanyounis,م ناصر مبنى التحرير,Al-Tahrir Building,MoH,34.292639,31.346778,MoH
+100,Khan Younis  ,Alattar-الكنيس ,أطباء العالم اسبانيا - العطار,MSF Spain’s Al Attar PHCC,MSF SPAIN,34.2795,31.347417,MSF
+101,Khan Younis  ,Mawasi Khanyounis,أطباء العالم- مواصي خانيونس,Mawasi-Khan Younis Primary Health Care Center/ MdM-F,MDM ,34.263361,31.358556,MoH
+102,Khan Younis  ,Asdaa,نقطة أصداء الطبية,Asdaa Medical Point,MoH,34.30006,31.3644465,MoH
+103,Khan Younis  , Mawasi Khanyounis  مقابل شارع حنين         ,طب الاسرة,Teb Alosra ,TEB ALOSRA,34.300083,31.3935,MoH
+104,Khan Younis  ,بجوار مستشفى الهلال الميداني,شفاء فلسطين - الكويتي,Shefaa Alkwaity ,SHEFAA ALKWAITY,34.275113,31.366636,MoH
+105,Khan Younis  ,Mawasi Khanyounis  ميناء القرارة,بلجيكا MSF مواصي خانيونس,PHC- MSF Belgium Mawasi Khan Younis,MSF BELGIUM,34.293417,31.385778,MoH
+106,Khan Younis  ,Khanyounis   شارع 5 ,هيوسم,Husam,HUSAM,34.2920634,31.3817736,MoH
+107,Rafah,Rafah,مستشفى الصليب الميداني,ICRC Fiel Hospital,ICRC,34.24275,31.342222,MoH
+108,Rafah,Well 19   محطة ايتا,هيرويك هارتس بئر 19 البسمة,heroic haert bier 19,HEROIC HEART,34.269278,31.344611,MoH
+109,Khan Younis  ,Al Amal,مستشفى الامل - الهلال,Al-Amal Hospital,PRCS,34.298306,31.352056,PRCS
+110,Khan Younis  ,Mawasi Khanyounis  جامع الفاروق,الهلال المواصي خانيونس بجوار النص,PRCS Mawasi,PRCS,34.2740413,31.3682852,PRCS
+111,Khan Younis  ,Alqarara شارع الاسطبل,الهلال المواصي القرارة بجوار الاسطبل,PRCS Mawasi Alqarara ,PRCS,34.292088,31.385153,PRCS
+112,Khan Younis  ,Asdaa  أصداء,مركز العودة-أصداء,AWDA Health Center - Asdaa,AWDA,34.3000466,31.3637325,MoH
+113,Khan Younis  ,Al-Aqsa University Area جامعة الأقصى,مركز العودة- جامعة الأقصى,AWDA Medical Point -Al-Aqsa University Area,AWDA,34.2815927,31.3658118,MoH
+114,Khan Younis  ,Mawasi Khanyounis جامع المجايدة,نقطة المجايدة,Almajada MP,MoH,34.2949977,31.3517295,MoH
+115,Khan Younis  ,Khanyounis  م الخير,مستشفى الخير,ALKHAIR HOSPITAL,MoH,34.281083,31.354556,MoH
+116,Khan Younis  ,Khanyounis موقع التل,نقطة الشموخ,Shumukh ,MoH,34.318611,31.397444,MoH
+117,Khan Younis  ,Shalet شاليه هيلتون,بال ميد الشاليهات,PAL MED  Shalet,PAL MED,34.312583,31.3945,MoH
+118,Khan Younis  ,Khanyounis  بئر عية,نقطة النهر البارد,ALNAHR ALBARED ,MoH,34.2885,31.343694,MoH
+119,Rafah,AL EQLEMI  المنتزه الاقليمي,الإقليمي,AL EQLEMI ,MoH,34.255361,31.337389,MoH
+120,Khan Younis  ,Khanyounis   دوار أبو حميد,مركز شهداء خانيونس,Khanyounis Martyrs Primary Healthcare Center,MoH,34.310944,31.3465,MoH
+121,Khan Younis  ,Alqarara المطاحن,نقطة القرارة الطبية,QARRARA MP,MoH,34.33316,31.380468,MoH
+122,Khan Younis  ,Khanyounis     كراج رفح,نقطة عائد الطبية,AHED MP,AHED,34.3001036,31.342833,MoH
+123,Khan Younis  ,Khanyounis  المشتل,مركز القدس خاص,Al-Quds Center is private,MoH,34.263731,31.348744,MoH
