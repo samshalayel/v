@@ -10888,6 +10888,7 @@ module.exports = {
         <script src="data/vaccination_r1_data.js?v=20260409"></script>
         <script src="data/vaccination_r3_data.js?v=20260409"></script>
         <script src="data/venn_intersection_data.js?v=20260413"></script>
+        <script src="data/venn_total_data.js?v=20260414"></script>
         <script>
 (function (factory) {
 
@@ -13404,46 +13405,146 @@ var FormatOptions = [
 
     <!-- ══════════════ VENN DIAGRAM MODAL ══════════════ -->
     <div id="venn-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
-      <div id="venn-box" style="background:#fff;border-radius:20px;padding:0;width:860px;max-height:92vh;min-width:400px;overflow:auto;box-shadow:0 24px 60px rgba(0,0,0,.35);position:fixed;resize:both;">
+      <div id="venn-box" style="background:#fff;border-radius:20px;padding:0;width:920px;max-height:92vh;min-width:400px;overflow:auto;box-shadow:0 24px 60px rgba(0,0,0,.35);position:fixed;resize:both;">
 
         <!-- Header — drag handle -->
-        <div id="venn-drag-handle" style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#1e3a5f 100%);border-radius:20px 20px 0 0;padding:20px 28px 18px;position:sticky;top:0;z-index:2;cursor:grab;user-select:none;">
+        <div id="venn-drag-handle" style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#1e3a5f 100%);border-radius:20px 20px 0 0;padding:18px 28px 14px;position:sticky;top:0;z-index:2;cursor:grab;user-select:none;">
           <button onclick="document.getElementById('venn-modal').style.display='none'"
               style="position:absolute;top:14px;right:16px;background:rgba(255,255,255,.15);border:none;font-size:1rem;cursor:pointer;color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .2s;"
               onmouseover="this.style.background='rgba(255,255,255,.3)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
-          <div style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:4px;">⭕ Defaulter Children Overlap — Venn Diagram</div>
-          <div style="font-size:0.75rem;color:#a5b4fc;">Individual tracking by PERSON_ID · Last record per child · Defaulters only</div>
-          <!-- 3 round pills -->
-          <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
-            <div style="background:rgba(124,58,237,.35);border:1.5px solid #a78bfa;border-radius:20px;padding:5px 14px;display:flex;align-items:center;gap:7px;">
-              <span style="width:10px;height:10px;border-radius:50%;background:#a78bfa;display:inline-block;"></span>
-              <span style="color:#e9d5ff;font-size:0.78rem;font-weight:700;">Round 1</span>
-              <span style="color:#fff;font-size:0.88rem;font-weight:900;">3,677</span>
-            </div>
-            <div style="background:rgba(5,150,105,.3);border:1.5px solid #6ee7b7;border-radius:20px;padding:5px 14px;display:flex;align-items:center;gap:7px;">
-              <span style="width:10px;height:10px;border-radius:50%;background:#6ee7b7;display:inline-block;"></span>
-              <span style="color:#d1fae5;font-size:0.78rem;font-weight:700;">Round 2</span>
-              <span style="color:#fff;font-size:0.88rem;font-weight:900;">2,895</span>
-            </div>
-            <div style="background:rgba(217,119,6,.3);border:1.5px solid #fcd34d;border-radius:20px;padding:5px 14px;display:flex;align-items:center;gap:7px;">
-              <span style="width:10px;height:10px;border-radius:50%;background:#fcd34d;display:inline-block;"></span>
-              <span style="color:#fef3c7;font-size:0.78rem;font-weight:700;">Round 3</span>
-              <span style="color:#fff;font-size:0.88rem;font-weight:900;">1,056</span>
-            </div>
-            <div style="background:rgba(220,38,38,.25);border:1.5px solid #fca5a5;border-radius:20px;padding:5px 14px;display:flex;align-items:center;gap:7px;margin-left:auto;">
-              <span style="color:#fca5a5;font-size:0.75rem;font-weight:700;">⚠ All 3 Rounds</span>
-              <span style="color:#fff;font-size:0.88rem;font-weight:900;">6</span>
+          <div id="venn-header-title" style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:2px;"></div>
+          <div id="venn-header-sub" style="font-size:0.72rem;color:#a5b4fc;"></div>
+          <!-- Tab switcher -->
+          <div style="display:flex;gap:6px;margin-top:12px;">
+            <button id="venn-tab-total" onclick="switchVennTab('total')"
+              style="padding:6px 18px;border-radius:20px;border:1.5px solid rgba(255,255,255,.5);font-size:0.78rem;font-weight:700;cursor:pointer;transition:all .2s;">
+              📊 Coverage
+            </button>
+            <button id="venn-tab-defaulter" onclick="switchVennTab('defaulter')"
+              style="padding:6px 18px;border-radius:20px;border:1.5px solid rgba(255,255,255,.25);font-size:0.78rem;font-weight:700;cursor:pointer;transition:all .2s;">
+              ⚠ Defaulters
+            </button>
+          </div>
+          <!-- Pills -->
+          <div id="venn-pills" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;"></div>
+        </div>
+
+        <!-- ══ TAB: COVERAGE (Total Children) ══ -->
+        <div id="venn-content-total" style="padding:24px 28px;display:block;">
+          <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+
+            <!-- Coverage SVG -->
+            <svg viewBox="0 0 460 400" width="460" height="400" style="flex-shrink:0;font-family:inherit;overflow:visible;">
+              <defs>
+                <filter id="vglow2" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="6" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <filter id="vshadow3"><feDropShadow dx="0" dy="3" stdDeviation="6" flood-opacity=".2"/></filter>
+                <radialGradient id="tg1" cx="40%" cy="40%"><stop offset="0%" stop-color="#a78bfa" stop-opacity=".3"/><stop offset="100%" stop-color="#7c3aed" stop-opacity=".06"/></radialGradient>
+                <radialGradient id="tg2" cx="60%" cy="40%"><stop offset="0%" stop-color="#6ee7b7" stop-opacity=".3"/><stop offset="100%" stop-color="#059669" stop-opacity=".06"/></radialGradient>
+                <radialGradient id="tg3" cx="50%" cy="60%"><stop offset="0%" stop-color="#fcd34d" stop-opacity=".3"/><stop offset="100%" stop-color="#d97706" stop-opacity=".06"/></radialGradient>
+              </defs>
+              <!-- Circles -->
+              <circle cx="172" cy="168" r="132" fill="url(#tg1)" stroke="#7c3aed" stroke-width="2" filter="url(#vshadow3)"/>
+              <circle cx="288" cy="168" r="132" fill="url(#tg2)" stroke="#059669" stroke-width="2" filter="url(#vshadow3)"/>
+              <circle cx="230" cy="258" r="132" fill="url(#tg3)" stroke="#d97706" stroke-width="2" filter="url(#vshadow3)"/>
+              <!-- Round badges -->
+              <rect x="10" y="22" width="108" height="36" rx="10" fill="#ede9fe"/>
+              <text x="64" y="37" font-size="11" font-weight="800" fill="#5b21b6" text-anchor="middle">Round 1</text>
+              <text x="64" y="51" font-size="10" fill="#7c3aed" text-anchor="middle">14,914 children</text>
+              <rect x="342" y="22" width="108" height="36" rx="10" fill="#d1fae5"/>
+              <text x="396" y="37" font-size="11" font-weight="800" fill="#047857" text-anchor="middle">Round 2</text>
+              <text x="396" y="51" font-size="10" fill="#059669" text-anchor="middle">15,757 children</text>
+              <rect x="176" y="366" width="108" height="36" rx="10" fill="#fef3c7"/>
+              <text x="230" y="381" font-size="11" font-weight="800" fill="#92400e" text-anchor="middle">Round 3</text>
+              <text x="230" y="395" font-size="10" fill="#d97706" text-anchor="middle">6,326 children</text>
+              <!-- R1 only -->
+              <text x="108" y="153" font-size="26" font-weight="900" fill="#5b21b6" text-anchor="middle">11,926</text>
+              <text x="108" y="169" font-size="9" font-weight="700" fill="#7c3aed" text-anchor="middle">R1 only</text>
+              <text x="108" y="181" font-size="8" fill="#a78bfa" text-anchor="middle">79.9%</text>
+              <!-- R2 only -->
+              <text x="352" y="153" font-size="26" font-weight="900" fill="#047857" text-anchor="middle">12,856</text>
+              <text x="352" y="169" font-size="9" font-weight="700" fill="#059669" text-anchor="middle">R2 only</text>
+              <text x="352" y="181" font-size="8" fill="#6ee7b7" text-anchor="middle">81.6%</text>
+              <!-- R3 only -->
+              <text x="230" y="318" font-size="26" font-weight="900" fill="#92400e" text-anchor="middle">5,143</text>
+              <text x="230" y="333" font-size="9" font-weight="700" fill="#d97706" text-anchor="middle">R3 only</text>
+              <text x="230" y="345" font-size="8" fill="#f59e0b" text-anchor="middle">81.3%</text>
+              <!-- R1∩R2 clickable -->
+              <g onclick="openVennDetail('r1r2')" style="cursor:pointer;" onmouseover="this.querySelector('rect').style.fill='rgba(99,102,241,.3)'" onmouseout="this.querySelector('rect').style.fill='rgba(99,102,241,.15)'">
+                <rect x="196" y="100" width="68" height="34" rx="8" fill="rgba(99,102,241,.15)" stroke="rgba(99,102,241,.6)" stroke-width="1.5"/>
+                <text x="230" y="118" font-size="15" font-weight="900" fill="#3730a3" text-anchor="middle">2,300</text>
+                <text x="230" y="129" font-size="8" fill="#4f46e5" text-anchor="middle">R1∩R2 👆</text>
+              </g>
+              <!-- R1∩R3 clickable -->
+              <g onclick="openVennDetail('r1r3')" style="cursor:pointer;" onmouseover="this.querySelector('rect').style.fill='rgba(99,102,241,.3)'" onmouseout="this.querySelector('rect').style.fill='rgba(99,102,241,.15)'">
+                <rect x="124" y="242" width="62" height="34" rx="8" fill="rgba(99,102,241,.15)" stroke="rgba(99,102,241,.6)" stroke-width="1.5"/>
+                <text x="155" y="260" font-size="15" font-weight="900" fill="#3730a3" text-anchor="middle">582</text>
+                <text x="155" y="271" font-size="8" fill="#4f46e5" text-anchor="middle">R1∩R3 👆</text>
+              </g>
+              <!-- R2∩R3 clickable -->
+              <g onclick="openVennDetail('r2r3')" style="cursor:pointer;" onmouseover="this.querySelector('rect').style.fill='rgba(99,102,241,.3)'" onmouseout="this.querySelector('rect').style.fill='rgba(99,102,241,.15)'">
+                <rect x="274" y="242" width="62" height="34" rx="8" fill="rgba(99,102,241,.15)" stroke="rgba(99,102,241,.6)" stroke-width="1.5"/>
+                <text x="305" y="260" font-size="15" font-weight="900" fill="#3730a3" text-anchor="middle">495</text>
+                <text x="305" y="271" font-size="8" fill="#4f46e5" text-anchor="middle">R2∩R3 👆</text>
+              </g>
+              <!-- Center R1∩R2∩R3 clickable -->
+              <g onclick="openVennDetail('r1r2r3')" style="cursor:pointer;" onmouseover="this.querySelector('circle').style.fill='rgba(220,38,38,.35)'" onmouseout="this.querySelector('circle').style.fill='rgba(220,38,38,.18)'">
+                <circle cx="230" cy="200" r="26" fill="rgba(220,38,38,.18)" stroke="#ef4444" stroke-width="2"/>
+                <text x="230" y="197" font-size="13" font-weight="900" fill="#dc2626" text-anchor="middle">106</text>
+                <text x="230" y="209" font-size="7" font-weight="700" fill="#dc2626" text-anchor="middle">All 3 👆</text>
+              </g>
+            </svg>
+
+            <!-- Coverage stats panel -->
+            <div style="flex:1;min-width:190px;display:flex;flex-direction:column;gap:9px;">
+              <div style="background:#f5f3ff;border-radius:12px;padding:11px 13px;border-left:4px solid #7c3aed;">
+                <div style="font-size:0.68rem;color:#7c3aed;font-weight:700;margin-bottom:2px;">Seen only in R1</div>
+                <div style="font-size:1.4rem;font-weight:900;color:#5b21b6;line-height:1.1;">11,926</div>
+                <div style="font-size:0.68rem;color:#a78bfa;margin-top:2px;">Did not appear in R2 or R3</div>
+              </div>
+              <div style="background:#ecfdf5;border-radius:12px;padding:11px 13px;border-left:4px solid #059669;">
+                <div style="font-size:0.68rem;color:#059669;font-weight:700;margin-bottom:2px;">Seen only in R2</div>
+                <div style="font-size:1.4rem;font-weight:900;color:#047857;line-height:1.1;">12,856</div>
+                <div style="font-size:0.68rem;color:#6ee7b7;margin-top:2px;">New children in R2</div>
+              </div>
+              <div style="background:#fffbeb;border-radius:12px;padding:11px 13px;border-left:4px solid #d97706;">
+                <div style="font-size:0.68rem;color:#d97706;font-weight:700;margin-bottom:2px;">Seen only in R3</div>
+                <div style="font-size:1.4rem;font-weight:900;color:#92400e;line-height:1.1;">5,143</div>
+                <div style="font-size:0.68rem;color:#f59e0b;margin-top:2px;">New children in R3</div>
+              </div>
+              <div style="background:#fef2f2;border-radius:12px;padding:11px 13px;border-left:4px solid #ef4444;">
+                <div style="font-size:0.68rem;color:#ef4444;font-weight:700;margin-bottom:2px;">🌟 Seen in all 3 rounds</div>
+                <div style="font-size:1.4rem;font-weight:900;color:#dc2626;line-height:1.1;">106</div>
+                <div style="font-size:0.68rem;color:#fca5a5;margin-top:2px;">Most consistent attendance</div>
+              </div>
+              <div style="background:#f8fafc;border-radius:10px;padding:10px 12px;">
+                <div style="font-size:0.68rem;font-weight:700;color:#64748b;margin-bottom:7px;">Return rates</div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                  <span style="font-size:0.7rem;color:#5b21b6;">R1 → R2</span>
+                  <span style="font-weight:800;font-size:0.8rem;color:#3730a3;">2,406 <span style="font-size:0.68rem;font-weight:500;color:#94a3b8;">(16.1%)</span></span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                  <span style="font-size:0.7rem;color:#5b21b6;">R1 → R3</span>
+                  <span style="font-weight:800;font-size:0.8rem;color:#3730a3;">688 <span style="font-size:0.68rem;font-weight:500;color:#94a3b8;">(4.6%)</span></span>
+                </div>
+                <div style="display:flex;justify-content:space-between;">
+                  <span style="font-size:0.7rem;color:#047857;">R2 → R3</span>
+                  <span style="font-weight:800;font-size:0.8rem;color:#3730a3;">601 <span style="font-size:0.68rem;font-weight:500;color:#94a3b8;">(3.8%)</span></span>
+                </div>
+              </div>
+              <div style="font-size:0.65rem;color:#cbd5e1;line-height:1.5;">
+                All children · PERSON_ID tracking
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Body -->
-        <div style="padding:24px 28px;">
-
-          <!-- SVG Venn + stats row -->
+        <!-- ══ TAB: DEFAULTERS ══ -->
+        <div id="venn-content-defaulter" style="padding:24px 28px;display:none;">
           <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
-
-            <!-- SVG -->
+            <!-- Defaulters SVG -->
             <svg viewBox="0 0 460 400" width="460" height="400" style="flex-shrink:0;font-family:inherit;overflow:visible;">
               <defs>
                 <filter id="vglow" x="-20%" y="-20%" width="140%" height="140%">
@@ -13455,140 +13556,114 @@ var FormatOptions = [
                 <radialGradient id="g2" cx="60%" cy="40%"><stop offset="0%" stop-color="#6ee7b7" stop-opacity=".35"/><stop offset="100%" stop-color="#059669" stop-opacity=".08"/></radialGradient>
                 <radialGradient id="g3" cx="50%" cy="60%"><stop offset="0%" stop-color="#fcd34d" stop-opacity=".35"/><stop offset="100%" stop-color="#d97706" stop-opacity=".08"/></radialGradient>
               </defs>
-
-              <!-- Circles -->
               <circle cx="172" cy="168" r="132" fill="url(#g1)" stroke="#7c3aed" stroke-width="2" filter="url(#vshadow2)"/>
               <circle cx="288" cy="168" r="132" fill="url(#g2)" stroke="#059669" stroke-width="2" filter="url(#vshadow2)"/>
               <circle cx="230" cy="258" r="132" fill="url(#g3)" stroke="#d97706" stroke-width="2" filter="url(#vshadow2)"/>
-
-              <!-- Round badges outside -->
               <rect x="10" y="22" width="100" height="36" rx="10" fill="#ede9fe"/>
               <text x="60" y="37" font-size="11" font-weight="800" fill="#5b21b6" text-anchor="middle">Round 1</text>
               <text x="60" y="51" font-size="10" fill="#7c3aed" text-anchor="middle">3,677 defaulters</text>
-
               <rect x="350" y="22" width="100" height="36" rx="10" fill="#d1fae5"/>
               <text x="400" y="37" font-size="11" font-weight="800" fill="#047857" text-anchor="middle">Round 2</text>
               <text x="400" y="51" font-size="10" fill="#059669" text-anchor="middle">2,895 defaulters</text>
-
               <rect x="180" y="366" width="100" height="36" rx="10" fill="#fef3c7"/>
               <text x="230" y="381" font-size="11" font-weight="800" fill="#92400e" text-anchor="middle">Round 3</text>
-              <text x="230" y="395" font-size="10" fill="#d97706" text-anchor="middle">1,203 defaulters</text>
-
-              <!-- ── R1 only ── -->
-              <text x="108" y="156" font-size="28" font-weight="900" fill="#5b21b6" text-anchor="middle">3,391</text>
+              <text x="230" y="395" font-size="10" fill="#d97706" text-anchor="middle">810 defaulters</text>
+              <text x="108" y="156" font-size="28" font-weight="900" fill="#5b21b6" text-anchor="middle">3,405</text>
               <text x="108" y="172" font-size="9.5" font-weight="700" fill="#7c3aed" text-anchor="middle">R1 only</text>
-              <text x="108" y="184" font-size="8.5" fill="#a78bfa" text-anchor="middle">92.2%</text>
-
-              <!-- ── R2 only ── -->
-              <text x="352" y="156" font-size="28" font-weight="900" fill="#047857" text-anchor="middle">2,580</text>
+              <text x="108" y="184" font-size="8.5" fill="#a78bfa" text-anchor="middle">92.6%</text>
+              <text x="352" y="156" font-size="28" font-weight="900" fill="#047857" text-anchor="middle">2,600</text>
               <text x="352" y="172" font-size="9.5" font-weight="700" fill="#059669" text-anchor="middle">R2 only</text>
-              <text x="352" y="184" font-size="8.5" fill="#6ee7b7" text-anchor="middle">89.1%</text>
-
-              <!-- ── R3 only ── -->
-              <text x="230" y="318" font-size="28" font-weight="900" fill="#92400e" text-anchor="middle">1,066</text>
+              <text x="352" y="184" font-size="8.5" fill="#6ee7b7" text-anchor="middle">89.8%</text>
+              <text x="230" y="318" font-size="28" font-weight="900" fill="#92400e" text-anchor="middle">710</text>
               <text x="230" y="333" font-size="9.5" font-weight="700" fill="#d97706" text-anchor="middle">R3 only</text>
-              <text x="230" y="345" font-size="8.5" fill="#f59e0b" text-anchor="middle">88.6%</text>
-
-              <!-- ── R1 ∩ R2 ── clickable -->
+              <text x="230" y="345" font-size="8.5" fill="#f59e0b" text-anchor="middle">87.7%</text>
               <g onclick="openVennDetail('r1r2')" style="cursor:pointer;" onmouseover="this.querySelector('rect').style.fill='rgba(99,102,241,.3)'" onmouseout="this.querySelector('rect').style.fill='rgba(99,102,241,.15)'">
                 <rect x="196" y="100" width="68" height="34" rx="8" fill="rgba(99,102,241,.15)" stroke="rgba(99,102,241,.6)" stroke-width="1.5"/>
-                <text x="230" y="118" font-size="16" font-weight="900" fill="#3730a3" text-anchor="middle">228</text>
+                <text x="230" y="118" font-size="16" font-weight="900" fill="#3730a3" text-anchor="middle">232</text>
                 <text x="230" y="129" font-size="8" fill="#4f46e5" text-anchor="middle">R1 ∩ R2 👆</text>
               </g>
-
-              <!-- ── R1 ∩ R3 ── clickable -->
               <g onclick="openVennDetail('r1r3')" style="cursor:pointer;" onmouseover="this.querySelector('rect').style.fill='rgba(99,102,241,.3)'" onmouseout="this.querySelector('rect').style.fill='rgba(99,102,241,.15)'">
                 <rect x="130" y="242" width="56" height="34" rx="8" fill="rgba(99,102,241,.15)" stroke="rgba(99,102,241,.6)" stroke-width="1.5"/>
-                <text x="158" y="260" font-size="16" font-weight="900" fill="#3730a3" text-anchor="middle">50</text>
+                <text x="158" y="260" font-size="16" font-weight="900" fill="#3730a3" text-anchor="middle">37</text>
                 <text x="158" y="271" font-size="8" fill="#4f46e5" text-anchor="middle">R1∩R3 👆</text>
               </g>
-
-              <!-- ── R2 ∩ R3 ── clickable -->
               <g onclick="openVennDetail('r2r3')" style="cursor:pointer;" onmouseover="this.querySelector('rect').style.fill='rgba(99,102,241,.3)'" onmouseout="this.querySelector('rect').style.fill='rgba(99,102,241,.15)'">
                 <rect x="274" y="242" width="56" height="34" rx="8" fill="rgba(99,102,241,.15)" stroke="rgba(99,102,241,.6)" stroke-width="1.5"/>
-                <text x="302" y="260" font-size="16" font-weight="900" fill="#3730a3" text-anchor="middle">79</text>
+                <text x="302" y="260" font-size="16" font-weight="900" fill="#3730a3" text-anchor="middle">59</text>
                 <text x="302" y="271" font-size="8" fill="#4f46e5" text-anchor="middle">R2∩R3 👆</text>
               </g>
-
-              <!-- ── Center ── clickable -->
               <g onclick="openVennDetail('r1r2r3')" style="cursor:pointer;" onmouseover="this.querySelector('circle').style.fill='rgba(220,38,38,.35)'" onmouseout="this.querySelector('circle').style.fill='rgba(220,38,38,.18)'">
                 <circle cx="230" cy="198" r="24" fill="rgba(220,38,38,.18)" stroke="#ef4444" stroke-width="2"/>
-                <text x="230" y="194" font-size="14" font-weight="900" fill="#dc2626" text-anchor="middle">8</text>
+                <text x="230" y="194" font-size="14" font-weight="900" fill="#dc2626" text-anchor="middle">4</text>
                 <text x="230" y="207" font-size="7.5" font-weight="700" fill="#dc2626" text-anchor="middle">All 3 👆</text>
               </g>
             </svg>
 
-            <!-- Stats panel -->
-            <div style="flex:1;min-width:190px;display:flex;flex-direction:column;gap:10px;">
-
-              <!-- stat cards -->
-              <div style="background:#f5f3ff;border-radius:12px;padding:12px 14px;border-left:4px solid #7c3aed;">
-                <div style="font-size:0.7rem;color:#7c3aed;font-weight:700;margin-bottom:2px;">R1 only — did not return</div>
-                <div style="font-size:1.5rem;font-weight:900;color:#5b21b6;line-height:1;">3,391</div>
-                <div style="font-size:0.7rem;color:#a78bfa;margin-top:2px;">92.2% of R1 defaulters</div>
+            <!-- Defaulters stats panel -->
+            <div style="flex:1;min-width:190px;display:flex;flex-direction:column;gap:9px;">
+              <div style="background:#f5f3ff;border-radius:12px;padding:11px 13px;border-left:4px solid #7c3aed;">
+                <div style="font-size:0.68rem;color:#7c3aed;font-weight:700;margin-bottom:2px;">R1 only — did not return</div>
+                <div style="font-size:1.4rem;font-weight:900;color:#5b21b6;line-height:1.1;">3,405</div>
+                <div style="font-size:0.68rem;color:#a78bfa;margin-top:2px;">92.6% of R1 defaulters</div>
               </div>
-              <div style="background:#ecfdf5;border-radius:12px;padding:12px 14px;border-left:4px solid #059669;">
-                <div style="font-size:0.7rem;color:#059669;font-weight:700;margin-bottom:2px;">R2 only — new defaulters</div>
-                <div style="font-size:1.5rem;font-weight:900;color:#047857;line-height:1;">2,583</div>
-                <div style="font-size:0.7rem;color:#6ee7b7;margin-top:2px;">89.2% of R2 defaulters</div>
+              <div style="background:#ecfdf5;border-radius:12px;padding:11px 13px;border-left:4px solid #059669;">
+                <div style="font-size:0.68rem;color:#059669;font-weight:700;margin-bottom:2px;">R2 only — new defaulters</div>
+                <div style="font-size:1.4rem;font-weight:900;color:#047857;line-height:1.1;">2,600</div>
+                <div style="font-size:0.68rem;color:#6ee7b7;margin-top:2px;">89.8% of R2 defaulters</div>
               </div>
-              <div style="background:#fffbeb;border-radius:12px;padding:12px 14px;border-left:4px solid #d97706;">
-                <div style="font-size:0.7rem;color:#d97706;font-weight:700;margin-bottom:2px;">R3 only — new defaulters</div>
-                <div style="font-size:1.5rem;font-weight:900;color:#92400e;line-height:1;">924</div>
-                <div style="font-size:0.7rem;color:#f59e0b;margin-top:2px;">87.5% of R3 defaulters</div>
+              <div style="background:#fffbeb;border-radius:12px;padding:11px 13px;border-left:4px solid #d97706;">
+                <div style="font-size:0.68rem;color:#d97706;font-weight:700;margin-bottom:2px;">R3 only — new defaulters</div>
+                <div style="font-size:1.4rem;font-weight:900;color:#92400e;line-height:1.1;">710</div>
+                <div style="font-size:0.68rem;color:#f59e0b;margin-top:2px;">87.7% of R3 defaulters</div>
               </div>
-              <div style="background:#fef2f2;border-radius:12px;padding:12px 14px;border-left:4px solid #ef4444;">
-                <div style="font-size:0.7rem;color:#ef4444;font-weight:700;margin-bottom:2px;">⚠ Chronic — all 3 rounds</div>
-                <div style="font-size:1.5rem;font-weight:900;color:#dc2626;line-height:1;">8</div>
-                <div style="font-size:0.7rem;color:#fca5a5;margin-top:2px;">Highest follow-up priority</div>
+              <div style="background:#fef2f2;border-radius:12px;padding:11px 13px;border-left:4px solid #ef4444;">
+                <div style="font-size:0.68rem;color:#ef4444;font-weight:700;margin-bottom:2px;">⚠ Chronic — all 3 rounds</div>
+                <div style="font-size:1.4rem;font-weight:900;color:#dc2626;line-height:1.1;">4</div>
+                <div style="font-size:0.68rem;color:#fca5a5;margin-top:2px;">Highest follow-up priority</div>
               </div>
-
-              <!-- intersections mini table -->
-              <div style="background:#f8fafc;border-radius:10px;padding:10px 12px;margin-top:2px;">
-                <div style="font-size:0.7rem;font-weight:700;color:#64748b;margin-bottom:7px;">Intersections</div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
-                  <span style="font-size:0.72rem;color:#4f46e5;">R1 ∩ R2</span>
-                  <span style="font-weight:800;font-size:0.82rem;color:#3730a3;">228</span>
+              <div style="background:#f8fafc;border-radius:10px;padding:10px 12px;">
+                <div style="font-size:0.68rem;font-weight:700;color:#64748b;margin-bottom:7px;">Intersections</div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                  <span style="font-size:0.7rem;color:#4f46e5;">R1 ∩ R2</span>
+                  <span style="font-weight:800;font-size:0.8rem;color:#3730a3;">232</span>
                 </div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
-                  <span style="font-size:0.72rem;color:#4f46e5;">R1 ∩ R3</span>
-                  <span style="font-weight:800;font-size:0.82rem;color:#3730a3;">50</span>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                  <span style="font-size:0.7rem;color:#4f46e5;">R1 ∩ R3</span>
+                  <span style="font-weight:800;font-size:0.8rem;color:#3730a3;">37</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;">
-                  <span style="font-size:0.72rem;color:#4f46e5;">R2 ∩ R3</span>
-                  <span style="font-weight:800;font-size:0.82rem;color:#3730a3;">79</span>
+                  <span style="font-size:0.7rem;color:#4f46e5;">R2 ∩ R3</span>
+                  <span style="font-weight:800;font-size:0.8rem;color:#3730a3;">59</span>
                 </div>
               </div>
-
-              <div style="font-size:0.68rem;color:#cbd5e1;line-height:1.5;margin-top:2px;">
-                Individual tracking · PERSON_ID · Last record per child
+              <div style="font-size:0.65rem;color:#cbd5e1;line-height:1.5;">
+                PERSON_ID · Last record per child
               </div>
             </div>
           </div>
 
-        <!-- Top persistent defaulter facilities list -->
-        <div style="margin-top:20px;border-top:1px solid #e2e8f0;padding-top:16px;">
-          <!-- Top facilities table -->
-          <div style="margin-top:8px;background:#f8fafc;border-radius:12px;padding:14px 16px;">
-            <div style="font-weight:700;font-size:0.85rem;color:#1e293b;margin-bottom:10px;">🏥 Top Facilities — Cumulative Defaulters Across Rounds</div>
-            <div style="overflow-x:auto;">
-              <table style="width:100%;border-collapse:collapse;font-size:0.75rem;">
-                <thead>
-                  <tr style="background:#e2e8f0;">
-                    <th style="text-align:left;padding:7px 10px;border-radius:8px 0 0 8px;color:#374151;">Facility</th>
-                    <th style="padding:7px 10px;color:#7c3aed;text-align:center;">R1</th>
-                    <th style="padding:7px 10px;color:#059669;text-align:center;">R2</th>
-                    <th style="padding:7px 10px;color:#d97706;text-align:center;">R3</th>
-                    <th style="padding:7px 10px;color:#dc2626;text-align:center;border-radius:0 8px 8px 0;">Total</th>
-                  </tr>
-                </thead>
-                <tbody id="venn-table-body">
-                </tbody>
-              </table>
+          <!-- Top defaulter facilities table -->
+          <div style="margin-top:20px;border-top:1px solid #e2e8f0;padding-top:16px;">
+            <div style="background:#f8fafc;border-radius:12px;padding:14px 16px;">
+              <div style="font-weight:700;font-size:0.85rem;color:#1e293b;margin-bottom:10px;">🏥 Top Facilities — Cumulative Defaulters Across Rounds</div>
+              <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:0.75rem;">
+                  <thead>
+                    <tr style="background:#e2e8f0;">
+                      <th style="text-align:left;padding:7px 10px;border-radius:8px 0 0 8px;color:#374151;">Facility</th>
+                      <th style="padding:7px 10px;color:#7c3aed;text-align:center;">R1</th>
+                      <th style="padding:7px 10px;color:#059669;text-align:center;">R2</th>
+                      <th style="padding:7px 10px;color:#d97706;text-align:center;">R3</th>
+                      <th style="padding:7px 10px;color:#dc2626;text-align:center;border-radius:0 8px 8px 0;">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody id="venn-table-body"></tbody>
+                </table>
+              </div>
             </div>
           </div>
+        </div><!-- /defaulter tab -->
 
-        </div><!-- /body -->
         <div style="position:sticky;bottom:0;right:0;padding:4px 8px;text-align:right;pointer-events:none;">
           <span style="font-size:10px;color:#cbd5e1;">⤡ resizable</span>
         </div>
@@ -13628,38 +13703,111 @@ var FormatOptions = [
 
         <!-- Footer -->
         <div style="padding:8px 24px;border-top:1px solid #e2e8f0;font-size:0.7rem;color:#94a3b8;flex-shrink:0;display:flex;justify-content:space-between;align-items:center;">
-          <span>* Individual tracking by PERSON_ID · Last record per child · Defaulters only</span>
+          <span>* Individual tracking by PERSON_ID · Last record per child</span>
           <span style="color:#cbd5e1;">⤡ drag &amp; resize</span>
         </div>
       </div>
     </div>
 
     <script>
+    // ── Venn tab state ───────────────────────────────────────────────
+    var _vennActiveTab = 'total';
+
+    function switchVennTab(tab) {
+      _vennActiveTab = tab;
+      var isTotal = tab === 'total';
+      document.getElementById('venn-content-total').style.display     = isTotal ? 'block' : 'none';
+      document.getElementById('venn-content-defaulter').style.display = isTotal ? 'none' : 'block';
+
+      // Tab button styles
+      var activeStyle  = 'background:rgba(255,255,255,.9);color:#1e1b4b;border:1.5px solid rgba(255,255,255,.9);';
+      var inactiveStyle= 'background:rgba(255,255,255,.08);color:rgba(255,255,255,.8);border:1.5px solid rgba(255,255,255,.25);';
+      document.getElementById('venn-tab-total').style.cssText     = (isTotal  ? activeStyle : inactiveStyle) + 'padding:6px 18px;border-radius:20px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:all .2s;';
+      document.getElementById('venn-tab-defaulter').style.cssText = (!isTotal ? activeStyle : inactiveStyle) + 'padding:6px 18px;border-radius:20px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:all .2s;';
+
+      // Update header title, subtitle, pills
+      var title = document.getElementById('venn-header-title');
+      var sub   = document.getElementById('venn-header-sub');
+      var pills = document.getElementById('venn-pills');
+      if (isTotal) {
+        title.textContent = '📊 Children Coverage — Venn Diagram';
+        sub.textContent   = 'How many children attended each round · PERSON_ID tracking';
+        pills.innerHTML =
+          '<div style="background:rgba(124,58,237,.35);border:1.5px solid #a78bfa;border-radius:20px;padding:4px 13px;display:flex;align-items:center;gap:7px;">' +
+            '<span style="width:9px;height:9px;border-radius:50%;background:#a78bfa;display:inline-block;"></span>' +
+            '<span style="color:#e9d5ff;font-size:0.76rem;font-weight:700;">Round 1</span>' +
+            '<span style="color:#fff;font-size:0.86rem;font-weight:900;">14,914</span></div>' +
+          '<div style="background:rgba(5,150,105,.3);border:1.5px solid #6ee7b7;border-radius:20px;padding:4px 13px;display:flex;align-items:center;gap:7px;">' +
+            '<span style="width:9px;height:9px;border-radius:50%;background:#6ee7b7;display:inline-block;"></span>' +
+            '<span style="color:#d1fae5;font-size:0.76rem;font-weight:700;">Round 2</span>' +
+            '<span style="color:#fff;font-size:0.86rem;font-weight:900;">15,757</span></div>' +
+          '<div style="background:rgba(217,119,6,.3);border:1.5px solid #fcd34d;border-radius:20px;padding:4px 13px;display:flex;align-items:center;gap:7px;">' +
+            '<span style="width:9px;height:9px;border-radius:50%;background:#fcd34d;display:inline-block;"></span>' +
+            '<span style="color:#fef3c7;font-size:0.76rem;font-weight:700;">Round 3</span>' +
+            '<span style="color:#fff;font-size:0.86rem;font-weight:900;">6,326</span></div>' +
+          '<div style="background:rgba(220,38,38,.25);border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;display:flex;align-items:center;gap:7px;margin-left:auto;">' +
+            '<span style="color:#fca5a5;font-size:0.73rem;font-weight:700;">🌟 All 3</span>' +
+            '<span style="color:#fff;font-size:0.86rem;font-weight:900;">106</span></div>';
+      } else {
+        title.textContent = '⭕ Defaulter Children Overlap — Venn Diagram';
+        sub.textContent   = 'PERSON_ID tracking · Last record per child · Defaulters only';
+        pills.innerHTML =
+          '<div style="background:rgba(124,58,237,.35);border:1.5px solid #a78bfa;border-radius:20px;padding:4px 13px;display:flex;align-items:center;gap:7px;">' +
+            '<span style="width:9px;height:9px;border-radius:50%;background:#a78bfa;display:inline-block;"></span>' +
+            '<span style="color:#e9d5ff;font-size:0.76rem;font-weight:700;">Round 1</span>' +
+            '<span style="color:#fff;font-size:0.86rem;font-weight:900;">3,677</span></div>' +
+          '<div style="background:rgba(5,150,105,.3);border:1.5px solid #6ee7b7;border-radius:20px;padding:4px 13px;display:flex;align-items:center;gap:7px;">' +
+            '<span style="width:9px;height:9px;border-radius:50%;background:#6ee7b7;display:inline-block;"></span>' +
+            '<span style="color:#d1fae5;font-size:0.76rem;font-weight:700;">Round 2</span>' +
+            '<span style="color:#fff;font-size:0.86rem;font-weight:900;">2,895</span></div>' +
+          '<div style="background:rgba(217,119,6,.3);border:1.5px solid #fcd34d;border-radius:20px;padding:4px 13px;display:flex;align-items:center;gap:7px;">' +
+            '<span style="width:9px;height:9px;border-radius:50%;background:#fcd34d;display:inline-block;"></span>' +
+            '<span style="color:#fef3c7;font-size:0.76rem;font-weight:700;">Round 3</span>' +
+            '<span style="color:#fff;font-size:0.86rem;font-weight:900;">810</span></div>' +
+          '<div style="background:rgba(220,38,38,.25);border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;display:flex;align-items:center;gap:7px;margin-left:auto;">' +
+            '<span style="color:#fca5a5;font-size:0.73rem;font-weight:700;">⚠ All 3</span>' +
+            '<span style="color:#fff;font-size:0.86rem;font-weight:900;">4</span></div>';
+      }
+    }
+
+    // Initialise tabs on page load
+    window.addEventListener('load', function() { switchVennTab('total'); });
+
     // ── Venn intersection detail logic ──────────────────────────────
     var _vdAllRows = [];
 
-    var VENN_LABELS = {
-      r1r2:   { title:'R1 ∩ R2 Defaulters', color:'#4f46e5', rounds:['R1','R2'] },
-      r1r3:   { title:'R1 ∩ R3 Defaulters', color:'#7c3aed', rounds:['R1','R3'] },
-      r2r3:   { title:'R2 ∩ R3 Defaulters', color:'#059669', rounds:['R2','R3'] },
+    var VENN_LABELS_DEFAULT = {
+      r1r2:   { title:'R1 ∩ R2 Defaulters',              color:'#4f46e5', rounds:['R1','R2'] },
+      r1r3:   { title:'R1 ∩ R3 Defaulters',              color:'#7c3aed', rounds:['R1','R3'] },
+      r2r3:   { title:'R2 ∩ R3 Defaulters',              color:'#059669', rounds:['R2','R3'] },
       r1r2r3: { title:'All 3 Rounds — Chronic Defaulters ⚠', color:'#dc2626', rounds:['R1','R2','R3'] }
+    };
+    var VENN_LABELS_TOTAL = {
+      r1r2:   { title:'Children in R1 & R2',             color:'#4f46e5', rounds:['R1','R2'] },
+      r1r3:   { title:'Children in R1 & R3',             color:'#7c3aed', rounds:['R1','R3'] },
+      r2r3:   { title:'Children in R2 & R3',             color:'#059669', rounds:['R2','R3'] },
+      r1r2r3: { title:'Children in All 3 Rounds 🌟',     color:'#dc2626', rounds:['R1','R2','R3'] }
     };
 
     function openVennDetail(key) {
-      var data = (typeof venn_intersection_data !== 'undefined') ? venn_intersection_data[key] : [];
+      var isTotal = _vennActiveTab === 'total';
+      var data = isTotal
+        ? ((typeof venn_total_data !== 'undefined') ? venn_total_data[key] : [])
+        : ((typeof venn_intersection_data !== 'undefined') ? venn_intersection_data[key] : []);
+      var VENN_LABELS = isTotal ? VENN_LABELS_TOTAL : VENN_LABELS_DEFAULT;
       var meta = VENN_LABELS[key];
       if (!data || !meta) return;
 
       document.getElementById('vd-title').textContent = meta.title;
       document.getElementById('vd-title').style.color = meta.color;
       document.getElementById('vd-subtitle').textContent =
-        data.length + ' children defaulting across ' + meta.rounds.join(' & ');
+        data.length + ' children · ' + meta.rounds.join(' & ');
 
       // Age breakdown stats
       var ages = {}, total = data.length;
       data.forEach(function(c){ ages[c.age] = (ages[c.age]||0)+1; });
       var statsHtml = '';
-      ['0-12m','12-24m','24m+'].forEach(function(a){
+      ['0-12','12-24','24+'].forEach(function(a){
         if(ages[a]) statsHtml += '<span style="background:#f1f5f9;border-radius:6px;padding:3px 9px;font-size:0.72rem;color:#475569;font-weight:600;">'+a+': <strong>'+ages[a]+'</strong></span>';
       });
       document.getElementById('vd-stats').innerHTML = statsHtml;
@@ -13712,19 +13860,20 @@ var FormatOptions = [
         tr.style.background = i%2===0 ? '#fff' : '#f8fafc';
         tr.style.borderBottom = '1px solid #f1f5f9';
         var html = '<td style="padding:6px 10px;color:#94a3b8;font-size:0.7rem;">'+(i+1)+'</td>';
-        var ageBg = c.age==='0-12m'?'#dbeafe':c.age==='12-24m'?'#d1fae5':'#fef3c7';
-        var ageCol = c.age==='0-12m'?'#1e40af':c.age==='12-24m'?'#065f46':'#92400e';
-        html += '<td style="padding:6px 10px;"><span style="background:'+ageBg+';color:'+ageCol+';padding:2px 7px;border-radius:5px;font-weight:700;font-size:0.72rem;">'+c.age+'</span></td>';
+        var ageBg = c.age==='0-12'?'#dbeafe':c.age==='12-24'?'#d1fae5':'#fef3c7';
+        var ageCol = c.age==='0-12'?'#1e40af':c.age==='12-24'?'#065f46':'#92400e';
+        html += '<td style="padding:6px 10px;"><span style="background:'+ageBg+';color:'+ageCol+';padding:2px 7px;border-radius:5px;font-weight:700;font-size:0.72rem;">'+(c.age||'—')+'</span></td>';
         rounds.forEach(function(r){
           var rk = r.toLowerCase();
           var col = r==='R1'?'#5b21b6':r==='R2'?'#047857':'#92400e';
           var fac = c['fac_'+rk] || '—';
-          var vax = c['vax_'+rk] || '—';
+          var vaxRaw = c['vax_'+rk];
+          var vaxArr = Array.isArray(vaxRaw) ? vaxRaw : (vaxRaw ? String(vaxRaw).split(', ') : []);
           var dt  = c['date_'+rk] || '—';
           html += '<td style="padding:6px 10px;color:#1e293b;font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+fac+'">'+fac+'</td>';
           // Vaccine badges
-          var vaxHtml = vax==='—' ? '<span style="color:#94a3b8;">—</span>' :
-            vax.split(', ').map(function(v){
+          var vaxHtml = vaxArr.length === 0 ? '<span style="color:#94a3b8;">—</span>' :
+            vaxArr.map(function(v){
               return '<span style="background:#ede9fe;color:'+col+';padding:1px 5px;border-radius:4px;font-size:0.68rem;font-weight:700;margin:1px;display:inline-block;">'+v+'</span>';
             }).join('');
           html += '<td style="padding:6px 10px;">'+vaxHtml+'</td>';
